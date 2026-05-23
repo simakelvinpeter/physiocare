@@ -1,0 +1,2851 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PhysioCare</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+        colors: {
+          teal: {
+            50:  '#F0FDFA',
+            100: '#CCFBF1',
+            200: '#99F6E4',
+            300: '#5EEAD4',
+            400: '#2DD4BF',
+            500: '#14B8A6',
+            600: '#0D9488',
+            700: '#0F766E',
+            800: '#115E59',
+            900: '#134E4A',
+          },
+        },
+        boxShadow: {
+          card: '0 1px 2px 0 rgba(17, 24, 39, 0.04), 0 1px 3px 0 rgba(17, 24, 39, 0.05)',
+          phone: '0 30px 60px -12px rgba(17, 24, 39, 0.35), 0 18px 36px -18px rgba(17, 24, 39, 0.25)',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    background:
+      radial-gradient(1200px 600px at 20% 10%, #E6FFFA 0%, transparent 60%),
+      radial-gradient(1000px 600px at 100% 100%, #F0FDFA 0%, transparent 55%),
+      linear-gradient(180deg, #F5FAF9 0%, #F3F4F6 100%);
+    color: #111827;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Hide scrollbars inside the phone */
+  .phone-scroll::-webkit-scrollbar { width: 0; height: 0; }
+  .phone-scroll { scrollbar-width: none; }
+
+  /* Marching dots for "playing" video */
+  @keyframes pulse-ring {
+    0%   { transform: scale(1);   opacity: 0.55; }
+    100% { transform: scale(1.8); opacity: 0;    }
+  }
+  .pulse-ring::before, .pulse-ring::after {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 9999px;
+    background: rgba(20, 184, 166, 0.45);
+    animation: pulse-ring 1.4s cubic-bezier(.22,.61,.36,1) infinite;
+  }
+  .pulse-ring::after { animation-delay: 0.7s; }
+
+  /* Screen slide transition */
+  .screen-enter      { transform: translateX(100%); }
+  .screen-enter-to   { transform: translateX(0); transition: transform 320ms cubic-bezier(.22,.61,.36,1); }
+  .screen-leave      { transform: translateX(0); }
+  .screen-leave-to   { transform: translateX(100%); transition: transform 320ms cubic-bezier(.22,.61,.36,1); }
+  .screen-back-enter { transform: translateX(-8%); opacity: 0.6; }
+  .screen-back-enter-to { transform: translateX(0); opacity: 1; transition: transform 320ms ease, opacity 320ms ease; }
+  .screen-back-leave-to { transform: translateX(100%); transition: transform 320ms cubic-bezier(.22,.61,.36,1); }
+
+  /* Progress bar grow */
+  @keyframes grow-bar { from { width: 0%; } }
+  .grow-bar { animation: grow-bar 900ms cubic-bezier(.22,.61,.36,1) both; }
+
+  /* Fade for tab switches */
+  .fade-enter    { opacity: 0; }
+  .fade-enter-to { opacity: 1; transition: opacity 180ms ease; }
+
+  /* Success check pop */
+  @keyframes pop {
+    0%   { transform: scale(0.6); opacity: 0; }
+    60%  { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1);    opacity: 1; }
+  }
+  .pop { animation: pop 360ms cubic-bezier(.22,.61,.36,1) both; }
+
+  /* Splash bob */
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  .bob { animation: bob 3.2s ease-in-out infinite; }
+
+  /* Tweak primary-color overrides */
+  :root { --twk-primary: #14B8A6; --twk-primary-dark: #0F766E; }
+  .bg-teal-500 { background-color: var(--twk-primary) !important; }
+  .bg-teal-700, .active\:bg-teal-700:active { background-color: var(--twk-primary-dark) !important; }
+  .text-teal-500 { color: var(--twk-primary) !important; }
+  .text-teal-600, .text-teal-700, .text-teal-800 { color: var(--twk-primary-dark) !important; }
+  .border-teal-500 { border-color: var(--twk-primary) !important; }
+  .from-teal-500 { --tw-gradient-from: var(--twk-primary) !important; --tw-gradient-to: transparent !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important; }
+  .to-teal-700 { --tw-gradient-to: var(--twk-primary-dark) !important; }
+
+  /* ── Responsive phone frame ───────────────────────────────────────────────
+     On small screens (≤430px): strip the bezel and fill the whole viewport
+     so the app feels native on a real phone browser.
+     On larger screens the phone frame stays centred as a preview.          */
+  @media (max-width: 430px) {
+    .phone-host {
+      padding: 0 !important;
+      align-items: flex-start !important;
+      justify-content: flex-start !important;
+    }
+    .phone-frame-outer {
+      width: 100vw !important;
+      height: 100svh !important; /* svh = small-viewport height (avoids mobile toolbar overlap) */
+      height: 100vh;             /* fallback for older browsers */
+    }
+    /* Hide the decorative bezel on mobile — it just wastes space */
+    .phone-frame-bezel,
+    .phone-frame-inner-bezel { display: none !important; }
+    /* Make the screen fill the frame with no rounded corners */
+    .phone-frame-screen { inset: 0 !important; border-radius: 0 !important; }
+    .phone-dynamic-island { display: none !important; }
+  }
+
+  /* On medium screens (tablet / small laptop) scale down the frame to fit */
+  @media (min-width: 431px) and (max-height: 920px) {
+    .phone-frame-outer {
+      transform: scale(0.88);
+      transform-origin: center center;
+    }
+  }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" data-presets="react">
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;height:22px;
+    border-radius:6px;cursor:default;padding:0}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+`;
+
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  const setTweak = React.useCallback((key, val) => {
+    setValues((prev) => ({ ...prev, [key]: val }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [key]: val } }, '*');
+  }, []);
+  return [values, setTweak];
+}
+
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel"
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  
+  
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input type="color" className="twk-swatch" value={value}
+             onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+
+const Icon = ({ d, size = 22, stroke = 1.8, fill = 'none', className = '', children }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
+       fill={fill} stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"
+       className={className}>
+    {d ? <path d={d} /> : children}
+  </svg>
+);
+
+const IconHome = (p) => <Icon {...p}><path d="M3 11.5 12 4l9 7.5" /><path d="M5 10.5V20h14v-9.5" /><path d="M10 20v-5h4v5" /></Icon>;
+const IconDumbbell = (p) => (
+  <Icon {...p}>
+    <path d="M3 9v6" /><path d="M6 6v12" /><path d="M18 6v12" /><path d="M21 9v6" /><path d="M6 12h12" />
+  </Icon>
+);
+const IconChart = (p) => (
+  <Icon {...p}>
+    <path d="M4 20V10" /><path d="M10 20V4" /><path d="M16 20v-8" /><path d="M22 20H2" />
+  </Icon>
+);
+const IconUser = (p) => (
+  <Icon {...p}>
+    <circle cx="12" cy="8" r="4" /><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" />
+  </Icon>
+);
+const IconBell = (p) => (
+  <Icon {...p}>
+    <path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2H4.5L6 16Z" /><path d="M10 20a2 2 0 0 0 4 0" />
+  </Icon>
+);
+const IconCalendar = (p) => (
+  <Icon {...p}>
+    <rect x="3.5" y="5" width="17" height="15" rx="2.5" /><path d="M8 3v4M16 3v4M3.5 10h17" />
+  </Icon>
+);
+const IconChevronLeft = (p) => <Icon {...p} d="M14.5 5 7.5 12l7 7" />;
+const IconChevronRight = (p) => <Icon {...p} d="M9.5 5l7 7-7 7" />;
+const IconCheck = (p) => <Icon {...p} d="M5 12.5 10 17.5 19.5 7.5" />;
+const IconPlay = (p) => (
+  <Icon {...p} fill="currentColor" stroke="none"><path d="M8 5.5v13l11-6.5L8 5.5Z" /></Icon>
+);
+const IconPause = (p) => (
+  <Icon {...p} fill="currentColor" stroke="none">
+    <rect x="7" y="5" width="3.5" height="14" rx="1" /><rect x="13.5" y="5" width="3.5" height="14" rx="1" />
+  </Icon>
+);
+const IconSearch = (p) => (
+  <Icon {...p}><circle cx="11" cy="11" r="6.5" /><path d="m20 20-3.5-3.5" /></Icon>
+);
+const IconFire = (p) => (
+  <Icon {...p}>
+    <path d="M12 3c1.5 3 4 4.5 4 8a4 4 0 0 1-8 0c0-1.2.4-2.1 1-3-.2 1.8 1 2.8 1 2.8S9.5 7 12 3Z" />
+  </Icon>
+);
+const IconHeart = (p) => (
+  <Icon {...p}>
+    <path d="M12 20s-7-4.3-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.7-7 10-7 10Z" />
+  </Icon>
+);
+const IconPhone = (p) => (
+  <Icon {...p}>
+    <path d="M5 4h3l2 4-2 1.5a11 11 0 0 0 6.5 6.5L16 14l4 2v3a2 2 0 0 1-2 2A15 15 0 0 1 3 6a2 2 0 0 1 2-2Z" />
+  </Icon>
+);
+const IconVideo = (p) => (
+  <Icon {...p}>
+    <rect x="3" y="6" width="13" height="12" rx="2" /><path d="M16 10l5-3v10l-5-3" />
+  </Icon>
+);
+const IconChat = (p) => (
+  <Icon {...p}>
+    <path d="M21 12a7.5 7.5 0 0 1-10.5 6.9L5 20l1.2-4.4A7.5 7.5 0 1 1 21 12Z" />
+  </Icon>
+);
+const IconArrowRight = (p) => <Icon {...p} d="M5 12h14M13 5l7 7-7 7" />;
+const IconStar = (p) => (
+  <Icon {...p} fill="currentColor" stroke="none">
+    <path d="m12 3 2.6 5.6 6.1.6-4.6 4.2 1.3 6L12 16.8 6.6 19.4l1.3-6L3.3 9.2l6.1-.6L12 3Z" />
+  </Icon>
+);
+const IconSparkle = (p) => (
+  <Icon {...p}>
+    <path d="M12 4v4M12 16v4M4 12h4M16 12h4M6.5 6.5l2.5 2.5M15 15l2.5 2.5M6.5 17.5 9 15M15 9l2.5-2.5" />
+  </Icon>
+);
+const IconShield = (p) => (
+  <Icon {...p}>
+    <path d="M12 3 4 6v6c0 4.5 3.2 7.8 8 9 4.8-1.2 8-4.5 8-9V6l-8-3Z" />
+  </Icon>
+);
+const IconMail = (p) => (
+  <Icon {...p}><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m3.5 7 8.5 6 8.5-6" /></Icon>
+);
+const IconLock = (p) => (
+  <Icon {...p}>
+    <rect x="4.5" y="10" width="15" height="10.5" rx="2.5" /><path d="M8 10V7a4 4 0 0 1 8 0v3" />
+  </Icon>
+);
+const IconEye = (p) => (
+  <Icon {...p}><path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7S2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.8" /></Icon>
+);
+const IconApple = (p) => (
+  <Icon {...p} fill="currentColor" stroke="none">
+    <path d="M16.5 12.6c0-2.1 1.7-3.1 1.8-3.1-1-1.4-2.5-1.6-3-1.6-1.3-.1-2.5.8-3.2.8-.6 0-1.7-.7-2.8-.7-1.4 0-2.7.8-3.5 2.1-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.6 2.2 2.7 2.1 1.1 0 1.5-.7 2.9-.7 1.3 0 1.7.7 2.9.7 1.2 0 2-1 2.7-2 .8-1.2 1.1-2.3 1.1-2.4-.1 0-2.1-.8-2.2-3.2ZM14.6 6.2c.6-.7 1-1.7.9-2.7-.8.1-1.8.6-2.4 1.3-.6.6-1.1 1.6-1 2.6 1 0 1.9-.5 2.5-1.2Z" />
+  </Icon>
+);
+const IconGoogle = (p) => (
+  <Icon {...p} stroke="none">
+    <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l2.9-2.9C17 1.9 14.7 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.4 2.6C6 7.2 8.7 5 12 5Z" />
+    <path fill="#4285F4" d="M23 12.3c0-.8-.1-1.5-.2-2.3H12v4.5h6.2c-.3 1.5-1.2 2.7-2.5 3.6l3.9 3c2.3-2.1 3.4-5.2 3.4-8.8Z" />
+    <path fill="#FBBC05" d="M5 14c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2L1.6 7.4C.8 9 .3 10.9.3 12s.5 3 1.3 4.6L5 14Z" />
+    <path fill="#34A853" d="M12 23c3 0 5.4-1 7.2-2.7l-3.9-3c-1.1.7-2.4 1.2-3.9 1.2-3.3 0-6-2.2-7-5.5L1.6 15.6C3.5 19.4 7.4 23 12 23Z" />
+  </Icon>
+);
+const IconPin = (p) => (
+  <Icon {...p}>
+    <path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z" /><circle cx="12" cy="10" r="2.5" />
+  </Icon>
+);
+const IconInfo = (p) => (
+  <Icon {...p}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8v.01" /></Icon>
+);
+const IconLogout = (p) => (
+  <Icon {...p}>
+    <path d="M10 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H10" />
+    <path d="M16 8l4 4-4 4M8 12h12" />
+  </Icon>
+);
+
+Object.assign(window, {
+  Icon,
+  IconHome, IconDumbbell, IconChart, IconUser, IconBell, IconCalendar,
+  IconChevronLeft, IconChevronRight, IconCheck, IconPlay, IconPause, IconSearch,
+  IconFire, IconHeart, IconPhone, IconVideo, IconChat, IconArrowRight, IconStar,
+  IconSparkle, IconShield, IconMail, IconLock, IconEye, IconApple, IconGoogle,
+  IconPin, IconInfo, IconLogout,
+});
+
+const Walker = ({ className = '' }) => (
+  <svg viewBox="0 0 240 200" className={className} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    {}
+    <ellipse cx="120" cy="168" rx="70" ry="6" fill="#99F6E4" opacity="0.55" />
+    {}
+    <path d="M56 168c0-10 4-20 10-26" stroke="#0F766E" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    <path d="M66 142c-3-6-3-12 0-16 3 4 3 10 0 16Z" fill="#14B8A6" />
+    <rect x="52" y="168" width="14" height="8" rx="2" fill="#0F766E" />
+    {}
+    <circle cx="184" cy="150" r="22" fill="#5EEAD4" />
+    <path d="M162 150a22 22 0 0 0 44 0" stroke="#0F766E" strokeWidth="1.4" opacity="0.35" fill="none" />
+    {}
+    <rect x="102" y="90" width="34" height="44" rx="10" fill="#14B8A6" />
+    {}
+    <rect x="104" y="128" width="10" height="38" rx="4" fill="#3B82F6" />
+    <rect x="124" y="128" width="10" height="38" rx="4" fill="#3B82F6" />
+    {}
+    <rect x="101" y="160" width="16" height="8" rx="3" fill="#0F766E" />
+    <rect x="121" y="160" width="16" height="8" rx="3" fill="#0F766E" />
+    {}
+    <rect x="94" y="96" width="9" height="28" rx="4" fill="#14B8A6" />
+    <rect x="135" y="96" width="9" height="28" rx="4" fill="#14B8A6" />
+    {}
+    <circle cx="119" cy="74" r="14" fill="#F5D0B0" />
+    {}
+    <path d="M106 72c0-10 6-16 13-16s13 6 13 14c-4-3-10-4-15-2-3 1-7 2-11 4Z" fill="#6B3F2A" />
+    {}
+    <path d="M115 78c2 1.5 5 1.5 7 0" stroke="#6B3F2A" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+  </svg>
+);
+
+const YogaPose = ({ className = '' }) => (
+  <svg viewBox="0 0 240 200" className={className} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="120" cy="170" rx="76" ry="7" fill="#99F6E4" opacity="0.5" />
+    {}
+    <rect x="46" y="162" width="148" height="10" rx="4" fill="#0F766E" opacity="0.8" />
+    {}
+    <path d="M80 158 Q120 130 160 158 Z" fill="#14B8A6" />
+    <circle cx="120" cy="118" r="16" fill="#14B8A6" />
+    {}
+    <circle cx="120" cy="94" r="14" fill="#F5D0B0" />
+    <path d="M107 92c0-9 6-15 13-15s13 6 13 14c-4-3-10-4-15-2-3 1-7 2-11 3Z" fill="#2F2A3A" />
+    {}
+    <path d="M104 124 Q86 142 90 156" stroke="#14B8A6" strokeWidth="10" fill="none" strokeLinecap="round" />
+    <path d="M136 124 Q154 142 150 156" stroke="#14B8A6" strokeWidth="10" fill="none" strokeLinecap="round" />
+    {}
+    <circle cx="58" cy="70" r="3" fill="#14B8A6" />
+    <circle cx="190" cy="62" r="2.5" fill="#14B8A6" />
+    <circle cx="198" cy="98" r="2" fill="#14B8A6" />
+  </svg>
+);
+
+const DoctorFigure = ({ className = '' }) => (
+  <svg viewBox="0 0 220 200" className={className} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <ellipse cx="110" cy="172" rx="64" ry="6" fill="#CCFBF1" />
+    {}
+    <path d="M72 174 L72 120 Q72 96 110 96 Q148 96 148 120 L148 174 Z" fill="#FFFFFF" stroke="#E5E7EB" strokeWidth="1.5" />
+    {}
+    <path d="M100 96 L110 118 L120 96" fill="#0F766E" />
+    {}
+    <path d="M94 110 Q88 130 102 132" stroke="#111827" strokeWidth="2.5" fill="none" />
+    <circle cx="104" cy="134" r="4" fill="#111827" />
+    {}
+    <circle cx="110" cy="78" r="16" fill="#8B5A3C" />
+    {}
+    <path d="M95 74c0-10 6-18 15-18s15 8 15 16c-4-3-10-4-16-2-3 1-8 2-14 4Z" fill="#2F2418" />
+    {}
+    <path d="M106 82c2.5 2 5.5 2 8 0" stroke="#2F2418" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+    {}
+    <rect x="128" y="118" width="10" height="14" rx="1.5" fill="#14B8A6" />
+  </svg>
+);
+
+const AchievementBadge = ({ className = '' }) => (
+  <svg viewBox="0 0 120 120" className={className} xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <circle cx="60" cy="56" r="38" fill="#CCFBF1" />
+    <circle cx="60" cy="56" r="30" fill="#14B8A6" />
+    <path d="M48 56 56 64 72 48" stroke="#FFFFFF" strokeWidth="5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M40 86 L52 106 L60 96 L68 106 L80 86" fill="#0F766E" />
+  </svg>
+);
+
+const StretchScene = ({ className = '' }) => (
+  <svg viewBox="0 0 320 180" className={className} xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+    <rect width="320" height="180" fill="#CCFBF1" />
+    {}
+    <rect y="150" width="320" height="30" fill="#99F6E4" />
+    {}
+    <ellipse cx="160" cy="154" rx="66" ry="6" fill="#0F766E" opacity="0.25" />
+    <path d="M100 150 Q120 128 160 128 Q210 128 220 152 Z" fill="#14B8A6" />
+    <circle cx="210" cy="124" r="12" fill="#F5D0B0" />
+    <path d="M200 122c0-8 5-13 11-13s11 5 11 12c-3-2-8-3-12-2-3 1-6 2-10 3Z" fill="#6B3F2A" />
+    {}
+    <path d="M150 128 Q140 100 160 96 Q176 94 184 110" stroke="#14B8A6" strokeWidth="14" fill="none" strokeLinecap="round" />
+    {}
+    <rect x="40" y="140" width="6" height="18" rx="1.5" fill="#0F766E" />
+    <rect x="36" y="144" width="14" height="10" rx="2" fill="#0F766E" />
+    <rect x="56" y="144" width="14" height="10" rx="2" fill="#0F766E" />
+    <rect x="52" y="140" width="6" height="18" rx="1.5" fill="#0F766E" />
+    <circle cx="270" cy="50" r="16" fill="#5EEAD4" opacity="0.7" />
+  </svg>
+);
+
+const WaveHero = ({ className = '' }) => (
+  <svg viewBox="0 0 320 120" className={className} xmlns="http://www.w3.org/2000/svg" aria-hidden="true" preserveAspectRatio="xMidYMid slice">
+    <rect width="320" height="120" fill="#CCFBF1" />
+    <path d="M0 80 Q80 60 160 80 T320 80 V120 H0 Z" fill="#5EEAD4" opacity="0.7" />
+    <path d="M0 96 Q80 78 160 96 T320 96 V120 H0 Z" fill="#14B8A6" opacity="0.9" />
+    <circle cx="260" cy="46" r="14" fill="#FDE68A" />
+    <circle cx="248" cy="44" r="14" fill="#CCFBF1" />
+  </svg>
+);
+
+Object.assign(window, { Walker, YogaPose, DoctorFigure, AchievementBadge, StretchScene, WaveHero });
+
+const StatusBar = () => (
+  <div className="h-12 px-7 pt-3 flex items-center justify-between text-[13px] font-semibold text-gray-900 select-none">
+    <div>9:41</div>
+    <div className="flex items-center gap-1.5">
+      {}
+      <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor" aria-hidden="true">
+        <rect x="0"  y="7" width="3" height="4" rx="0.7" />
+        <rect x="4"  y="5" width="3" height="6" rx="0.7" />
+        <rect x="8"  y="3" width="3" height="8" rx="0.7" />
+        <rect x="12" y="0" width="3" height="11" rx="0.7" />
+      </svg>
+      {}
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+        <path d="M1 4.5a11 11 0 0 1 14 0" />
+        <path d="M3 7a8 8 0 0 1 10 0" />
+        <path d="M5.5 9.5a4 4 0 0 1 5 0" />
+        <circle cx="8" cy="11" r="0.8" fill="currentColor" stroke="none" />
+      </svg>
+      {}
+      <svg width="26" height="12" viewBox="0 0 26 12" aria-hidden="true">
+        <rect x="0.5" y="0.5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity="0.4" />
+        <rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor" />
+        <rect x="23" y="4" width="2" height="4" rx="0.8" fill="currentColor" opacity="0.5" />
+      </svg>
+    </div>
+  </div>
+);
+
+const HomeIndicator = () => (
+  <div className="h-[34px] flex items-end justify-center pb-2">
+    <div className="h-[5px] w-[134px] rounded-full bg-gray-900" />
+  </div>
+);
+
+const PhoneFrame = ({ children }) => (
+  <div className="phone-frame-outer relative" style={{ width: 390, height: 844 }}>
+    {}
+    <div className="phone-frame-bezel absolute inset-0 rounded-[52px] bg-gray-900 shadow-phone" />
+    <div className="phone-frame-inner-bezel absolute inset-[6px] rounded-[46px] bg-black" />
+    {}
+    <div className="phone-frame-screen absolute inset-[11px] rounded-[40px] overflow-hidden bg-white">
+      <div className="relative w-full h-full">{children}</div>
+      {}
+      <div className="phone-dynamic-island absolute top-2 left-1/2 -translate-x-1/2 z-50 h-[30px] w-[118px] rounded-full bg-black" />
+    </div>
+  </div>
+);
+
+const TAB_ITEMS = [
+  { id: 'dashboard',        label: 'Home',      Icon: window.IconHome },
+  { id: 'exercises', label: 'Exercises', Icon: window.IconDumbbell },
+  { id: 'progress',         label: 'Progress',  Icon: window.IconChart },
+  { id: 'profile',          label: 'Profile',   Icon: window.IconUser },
+];
+
+const BottomTabs = ({ active, onTabTap }) => (
+  <div className="absolute inset-x-0 bottom-0 bg-white/95 backdrop-blur border-t border-gray-100 pt-2 pb-6 px-2 z-30">
+    <div className="flex items-stretch justify-between">
+      {TAB_ITEMS.map(({ id, label, Icon }) => {
+        const isActive = active === id;
+        return (
+          <button key={id} onClick={() => onTabTap(id)}
+            className="flex-1 flex flex-col items-center gap-1 py-1.5 focus:outline-none">
+            <Icon size={24} className={isActive ? 'text-teal-600' : 'text-gray-400'} />
+            <span className={`text-[11px] font-medium ${isActive ? 'text-teal-700' : 'text-gray-500'}`}>{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  </div>
+);
+
+const Screen = ({ children, withStatus = true, withTabs = false, activeTab, onTabTap, bg = 'bg-white' }) => (
+  <div className={`absolute inset-0 flex flex-col ${bg}`}>
+    {withStatus && <StatusBar />}
+    <div className={`flex-1 overflow-y-auto phone-scroll ${withTabs ? 'pb-[92px]' : ''}`}>
+      {children}
+    </div>
+    {withTabs && <BottomTabs active={activeTab} onTabTap={onTabTap} />}
+  </div>
+);
+
+const NavHeader = ({ title, onBack, right = null, subtle = false }) => (
+  <div className={`flex items-center justify-between px-4 pt-1 pb-3 ${subtle ? '' : ''}`}>
+    {onBack ? (
+      <button onClick={onBack} className="h-10 w-10 -ml-2 flex items-center justify-center rounded-full active:bg-gray-100">
+        <IconChevronLeft className="text-gray-900" size={22} />
+      </button>
+    ) : <div className="w-10" />}
+    <div className="text-[15px] font-semibold text-gray-900 truncate">{title}</div>
+    <div className="w-10 flex items-center justify-end">{right}</div>
+  </div>
+);
+
+const PrimaryButton = ({ children, className = '', ...props }) => (
+  <button
+    {...props}
+    className={`w-full h-[52px] rounded-[12px] bg-teal-500 active:bg-teal-700 text-white font-semibold text-[15px] shadow-[0_6px_20px_-8px_rgba(15,118,110,0.6)] transition-colors ${className}`}
+  >{children}</button>
+);
+
+const SecondaryButton = ({ children, className = '', ...props }) => (
+  <button
+    {...props}
+    className={`w-full h-[52px] rounded-[12px] bg-white border border-gray-200 active:bg-gray-50 text-gray-900 font-semibold text-[15px] transition-colors flex items-center justify-center gap-2 ${className}`}
+  >{children}</button>
+);
+
+const Card = ({ children, className = '', ...rest }) => (
+  <div {...rest} className={`bg-white rounded-[14px] shadow-card border border-gray-100 ${className}`}>{children}</div>
+);
+
+const Chip = ({ children, tone = 'teal' }) => {
+  const tones = {
+    teal:   'bg-teal-50 text-teal-700',
+    amber:  'bg-amber-50 text-amber-700',
+    gray:   'bg-gray-100 text-gray-600',
+    green:  'bg-emerald-50 text-emerald-700',
+  };
+  return <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full ${tones[tone]}`}>{children}</span>;
+};
+
+const ScreenTransition = ({ keyId, direction, children }) => {
+  const [prev, setPrev] = React.useState({ keyId, children, direction: 'none' });
+  const [current, setCurrent] = React.useState({ keyId, children, direction: 'none' });
+  const [animating, setAnimating] = React.useState(false);
+
+  React.useEffect(() => {
+    if (keyId === current.keyId) return;
+    setPrev(current);
+    setCurrent({ keyId, children, direction });
+    setAnimating(true);
+    const t = setTimeout(() => setAnimating(false), 340);
+    return () => clearTimeout(t);
+    
+  }, [keyId]);
+
+  
+  React.useEffect(() => {
+    if (keyId === current.keyId) {
+      setCurrent((c) => ({ ...c, children }));
+    }
+  }, [children]); 
+
+  const dir = current.direction;
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      {animating && (
+        <div
+          className="absolute inset-0 will-change-transform"
+          style={{
+            transform: dir === 'back' ? 'translateX(0)' : 'translateX(0)',
+            animation: dir === 'back'
+              ? 'none'
+              : 'none',
+          }}
+        >
+          {}
+          <div
+            className="absolute inset-0"
+            style={{
+              transform: dir === 'forward'
+                ? 'translateX(0)'
+                : dir === 'back'
+                ? 'translateX(0)'
+                : 'translateX(0)',
+              animation: dir === 'forward'
+                ? 'slideOutLeft 320ms cubic-bezier(.22,.61,.36,1) forwards'
+                : dir === 'back'
+                ? 'slideOutRight 320ms cubic-bezier(.22,.61,.36,1) forwards'
+                : 'none',
+            }}
+          >
+            {prev.children}
+          </div>
+        </div>
+      )}
+      {}
+      <div
+        key={current.keyId}
+        className="absolute inset-0"
+        style={{
+          animation: animating && dir === 'forward'
+            ? 'slideInRight 320ms cubic-bezier(.22,.61,.36,1) both'
+            : animating && dir === 'back'
+            ? 'slideInLeft 320ms cubic-bezier(.22,.61,.36,1) both'
+            : animating && dir === 'fade'
+            ? 'fadeIn 180ms ease both'
+            : 'none',
+        }}
+      >
+        {current.children}
+      </div>
+    </div>
+  );
+};
+
+const keyframesStyle = `
+@keyframes slideInRight  { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes slideOutLeft  { from { transform: translateX(0); }   to { transform: translateX(-18%); opacity: 0.8; } }
+@keyframes slideInLeft   { from { transform: translateX(-18%); opacity: 0.8; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOutRight { from { transform: translateX(0); }   to { transform: translateX(100%); } }
+@keyframes fadeIn        { from { opacity: 0; } to { opacity: 1; } }
+`;
+if (typeof document !== 'undefined' && !document.getElementById('phys-keyframes')) {
+  const s = document.createElement('style'); s.id = 'phys-keyframes'; s.textContent = keyframesStyle;
+  document.head.appendChild(s);
+}
+
+Object.assign(window, {
+  PhoneFrame, StatusBar, HomeIndicator, BottomTabs, Screen, NavHeader,
+  PrimaryButton, SecondaryButton, Card, Chip, ScreenTransition, TAB_ITEMS,
+});
+
+const SplashScreen = ({ onGetStarted }) => (
+  <Screen>
+    <div className="h-full flex flex-col px-7 pb-8">
+      <div className="flex-1 flex flex-col items-center justify-center">
+        {}
+        <div className="bob mb-3">
+          <svg width="58" height="44" viewBox="0 0 58 44" fill="none" aria-hidden="true">
+            <path d="M6 30 L22 14 L34 26 L46 8" stroke="#0F766E" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="48" cy="8" r="3.5" fill="#14B8A6" />
+          </svg>
+        </div>
+        <h1 className="text-[32px] font-bold tracking-tight text-gray-900">
+          Physio<span className="text-teal-500">Care</span>
+        </h1>
+        <p className="text-[13px] text-gray-500 mt-1">Your home physiotherapy companion</p>
+
+        <div className="mt-10 w-full rounded-[20px] overflow-hidden">
+          <div className="aspect-[5/4] bg-teal-100 flex items-center justify-center">
+            <Walker className="w-[72%] h-[82%]" />
+          </div>
+        </div>
+      </div>
+
+      <div className="pt-6">
+        <PrimaryButton onClick={onGetStarted}>Get Started</PrimaryButton>
+        <p className="text-center text-[12px] text-gray-400 mt-4">
+          Guided recovery, from the comfort of home.
+        </p>
+        <p className="text-center text-[11px] text-gray-300 mt-2">by Micy</p>
+      </div>
+    </div>
+  </Screen>
+);
+
+const TextField = ({ label, placeholder, type = 'text', Icon, value = '', onChange = () => {} }) => {
+  const [show, setShow] = React.useState(false);
+  const realType = type === 'password' && show ? 'text' : type;
+  return (
+    <label className="block">
+      <div className="text-[12px] font-medium text-gray-600 mb-1.5">{label}</div>
+      <div className="h-[52px] rounded-[12px] border border-gray-200 bg-white flex items-center px-3 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-100 transition-colors">
+        {Icon && <Icon size={18} className="text-gray-400 mr-2" />}
+        <input
+          type={realType}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 bg-transparent outline-none text-[14px] text-gray-900 placeholder:text-gray-400"
+        />
+        {type === 'password' && (
+          <button type="button" onClick={() => setShow(s => !s)} className="text-gray-400 p-1">
+            <IconEye size={18} />
+          </button>
+        )}
+      </div>
+    </label>
+  );
+};
+
+const LoginScreen = ({ onBack, onLogin, onSignup }) => {
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+  const [error, setError] = React.useState('');
+
+  const handleLogin = () => {
+    setError('');
+    if (!email || !password) {
+      setError('Please enter your email and password.');
+      return;
+    }
+    
+    const users = JSON.parse(localStorage.getItem('physiocare_users') || '[]');
+    const user = users.find(
+      u => u.email.toLowerCase() === email.trim().toLowerCase() && u.password === password
+    );
+    if (!user) {
+      setError('Invalid email or password. Please try again.');
+      return;
+    }
+    
+    localStorage.setItem('physiocare_session', JSON.stringify({ email: user.email }));
+    onLogin(user); 
+  };
+
+  return (
+  <Screen>
+    <NavHeader title="" onBack={onBack} />
+    <div className="px-6 pt-2">
+      <h1 className="text-[26px] font-bold text-gray-900 leading-tight">Welcome back</h1>
+      <p className="text-[13px] text-gray-500 mt-1">Let's continue your recovery journey.</p>
+
+      <div className="mt-7 space-y-4">
+        <TextField label="Email" type="email" placeholder="your@email.com"
+          Icon={IconMail} value={email} onChange={setEmail} />
+        <TextField label="Password" type="password" placeholder="••••••••"
+          Icon={IconLock} value={password} onChange={setPassword} />
+      </div>
+
+      {/* Show error message when login fails */}
+      {error && (
+        <div className="mt-3 p-3 rounded-[10px] bg-red-50 border border-red-100 text-red-700 text-[12px] font-medium">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-3 flex justify-end">
+        <button className="text-[12px] font-semibold text-teal-700">Forgot password?</button>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        <PrimaryButton onClick={handleLogin}>Log In</PrimaryButton>
+        <div className="flex items-center gap-3 py-1">
+          <div className="h-px flex-1 bg-gray-200" />
+          <div className="text-[11px] text-gray-400 font-medium">OR CONTINUE WITH</div>
+          <div className="h-px flex-1 bg-gray-200" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <SecondaryButton><IconGoogle size={18} /> Google</SecondaryButton>
+          <SecondaryButton><IconApple size={18} className="text-gray-900" /> Apple</SecondaryButton>
+        </div>
+      </div>
+
+      <div className="mt-8 text-center text-[13px] text-gray-500">
+        New here? <button onClick={onSignup} className="text-teal-700 font-semibold">Create an account</button>
+      </div>
+    </div>
+  </Screen>
+  );
+};
+
+// SignupScreen: collects user details, saves a new account to localStorage,
+// then starts a session for the new user.
+const SignupScreen = ({ onBack, onSignup, onLogin }) => {
+  const [name, setName]           = React.useState('');
+  const [email, setEmail]         = React.useState('');
+  const [password, setPassword]   = React.useState('');
+  const [condition, setCondition] = React.useState('Knee rehabilitation');
+  const [agreed, setAgreed]       = React.useState(false);
+  const [error, setError]         = React.useState('');
+
+  // Physiotherapy conditions the user can pick from
+  const CONDITIONS = [
+    'Knee rehabilitation',
+    'Lower back pain',
+    'Shoulder injury',
+    'Hip replacement recovery',
+    'Post-surgery rehab',
+    'Neck pain',
+    'General physiotherapy',
+  ];
+
+  const handleSignup = () => {
+    setError('');
+    // Validate inputs
+    if (!name.trim())                          { setError('Please enter your full name.'); return; }
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) { setError('Please enter a valid email address.'); return; }
+    if (password.length < 8)                   { setError('Password must be at least 8 characters.'); return; }
+    if (!agreed)                               { setError('Please agree to the Terms and Privacy Policy.'); return; }
+
+    // Check if this email is already registered
+    const users = JSON.parse(localStorage.getItem('physiocare_users') || '[]');
+    if (users.find(u => u.email.toLowerCase() === email.trim().toLowerCase())) {
+      setError('An account with this email already exists. Try logging in.');
+      return;
+    }
+
+    // Build the new user record
+    // NOTE: passwords are stored in plain text — this is a prototype only, not for production.
+    const newUser = {
+      id:        Date.now().toString(),
+      name:      name.trim(),
+      email:     email.trim().toLowerCase(),
+      password,
+      condition,
+      streakDays: 0,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Save to localStorage and start a session
+    users.push(newUser);
+    localStorage.setItem('physiocare_users', JSON.stringify(users));
+    localStorage.setItem('physiocare_session', JSON.stringify({ email: newUser.email }));
+    onSignup(newUser); // pass the full user object up to App
+  };
+
+  return (
+  <Screen>
+    <NavHeader title="" onBack={onBack} />
+    <div className="px-6 pt-2 pb-10">
+      <h1 className="text-[26px] font-bold text-gray-900 leading-tight">Create your account</h1>
+      <p className="text-[13px] text-gray-500 mt-1">A few details to personalise your plan.</p>
+
+      <div className="mt-7 space-y-4">
+        <TextField label="Full name" placeholder="E.g. Musa John"
+          Icon={IconUser} value={name} onChange={setName} />
+        <TextField label="Email" type="email" placeholder="your@email.com"
+          Icon={IconMail} value={email} onChange={setEmail} />
+        <TextField label="Password" type="password" placeholder="At least 8 characters"
+          Icon={IconLock} value={password} onChange={setPassword} />
+
+        {/* Condition / goal picker */}
+        <label className="block">
+          <div className="text-[12px] font-medium text-gray-600 mb-1.5">Condition / goal</div>
+          <div className="h-[52px] rounded-[12px] border border-gray-200 bg-white flex items-center px-3 focus-within:border-teal-500 transition-colors">
+            <IconHeart size={18} className="text-gray-400 mr-2 shrink-0" />
+            <select
+              value={condition}
+              onChange={(e) => setCondition(e.target.value)}
+              className="flex-1 bg-transparent outline-none text-[14px] text-gray-900 appearance-none cursor-pointer"
+            >
+              {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </label>
+      </div>
+
+      {/* Validation error */}
+      {error && (
+        <div className="mt-3 p-3 rounded-[10px] bg-red-50 border border-red-100 text-red-700 text-[12px] font-medium">
+          {error}
+        </div>
+      )}
+
+      <label className="flex items-start gap-2.5 mt-4">
+        <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded text-teal-500 accent-teal-500" />
+        <span className="text-[12px] text-gray-500 leading-snug">
+          I agree to the <span className="text-teal-700 font-semibold">Terms</span> and
+          <span className="text-teal-700 font-semibold"> Privacy Policy</span>.
+        </span>
+      </label>
+
+      <div className="mt-6">
+        <PrimaryButton onClick={handleSignup}>Create account</PrimaryButton>
+      </div>
+
+      <div className="mt-7 text-center text-[13px] text-gray-500">
+        Already have an account? <button onClick={onLogin} className="text-teal-700 font-semibold">Log in</button>
+      </div>
+    </div>
+  </Screen>
+  );
+};
+
+Object.assign(window, { SplashScreen, LoginScreen, SignupScreen });
+
+const calculateStreak = (activeDates) => {
+  if (!activeDates || activeDates.length === 0) return 0;
+  const today = new Date().toISOString().slice(0, 10);
+  let streak = 0;
+  let d = new Date(today);
+  while (true) {
+    const s = d.toISOString().slice(0, 10);
+    if (activeDates.includes(s)) { streak++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  return streak;
+};
+
+const getProgress = (email) => {
+  const raw = localStorage.getItem('physiocare_progress_' + email);
+  return raw ? JSON.parse(raw) : { completedExercises: [], activeDates: [] };
+};
+
+const saveProgress = (email, progress) => {
+  localStorage.setItem('physiocare_progress_' + email, JSON.stringify(progress));
+  const users = JSON.parse(localStorage.getItem('physiocare_users') || '[]');
+  const idx = users.findIndex(u => u.email === email);
+  if (idx !== -1) {
+    users[idx] = { ...users[idx], streakDays: calculateStreak(progress.activeDates) };
+    localStorage.setItem('physiocare_users', JSON.stringify(users));
+  }
+};
+
+const ExercisesScreen = ({ onTabTap, onOpenExercise }) => (
+  <Screen withTabs activeTab="exercises" onTabTap={onTabTap} bg="bg-[#F7FAF9]">
+    <div className="px-5 pt-3 pb-3 bg-white">
+      <h1 className="text-[22px] font-bold text-gray-900">Exercises</h1>
+      <p className="text-[13px] text-gray-500">Your personalised recovery plan</p>
+    </div>
+    <div className="px-5 mt-4 space-y-3 pb-6">
+      {EXERCISES.map((ex) => (
+        <button key={ex.id} onClick={() => onOpenExercise(ex)}
+          className="w-full bg-white rounded-[16px] border border-gray-100 shadow-card overflow-hidden text-left active:bg-gray-50">
+          <div className="relative h-[140px]">
+            {ex.thumbnail
+              ? <img src={ex.thumbnail} className="w-full h-full object-cover" alt={ex.title}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              : <StretchScene className="w-full h-[140px]" />}
+            <div className="absolute top-2 left-2"><Chip tone="teal">{ex.diff}</Chip></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-12 w-12 rounded-full bg-white/90 shadow flex items-center justify-center">
+                <IconPlay size={18} className="text-teal-700 translate-x-0.5" />
+              </div>
+            </div>
+          </div>
+          <div className="p-3.5">
+            <div className="text-[14px] font-semibold text-gray-900">{ex.title}</div>
+            <div className="text-[12px] text-gray-500 mt-0.5">{ex.meta}</div>
+          </div>
+        </button>
+      ))}
+    </div>
+  </Screen>
+);
+
+/* ===== src/screens-main.jsx ===== */
+// Main tabbed screens: Dashboard, Progress, Reminders, plus Profile placeholder.
+
+const DashboardScreen = ({ onTabTap, onQuickAction, onBook }) => {
+  const t = useT();
+  const quickActions = [
+    { id: 'assessment',    label: 'Assessment',     Icon: IconSparkle, tone: 'bg-teal-100 text-teal-700' },
+    { id: 'recommendation',label: 'Today\'s plan',  Icon: IconHeart,   tone: 'bg-rose-100 text-rose-600' },
+    { id: 'progress',      label: 'Progress',       Icon: IconChart,   tone: 'bg-indigo-100 text-indigo-600' },
+    { id: 'reminders',     label: 'Reminders',      Icon: IconBell,    tone: 'bg-amber-100 text-amber-700' },
+  ];
+
+  return (
+    <Screen withTabs activeTab="dashboard" onTabTap={onTabTap} bg="bg-[#F7FAF9]">
+      {}
+      <div className="px-5 pt-3 pb-5 bg-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-[12px] text-gray-500">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+          </div>
+            <h1 className="text-[22px] font-bold text-gray-900 mt-0.5">Hi, {t.patientFirst}{t.greetingEmoji ? ' 👋' : ''}</h1>
+            <p className="text-[13px] text-gray-500 mt-0.5">Let's keep up the momentum.</p>
+          </div>
+          <div className="h-11 w-11 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">{t.patientInitial}</div>
+        </div>
+      </div>
+
+      {/* Today's streak card */}
+      {t.showStreak && (
+      <div className="px-5 -mt-2">
+        <div className="rounded-[16px] p-4 bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-[0_10px_30px_-12px_rgba(15,118,110,0.5)]">
+          <div className="flex items-center gap-2 text-[12px] font-medium opacity-90">
+            <IconFire size={16} /> Recovery streak
+          </div>
+          <div className="mt-1 flex items-end justify-between">
+            <div>
+              <div className="text-[34px] font-bold leading-none">{calculateStreak(getProgress(t.email).activeDates)} days</div>
+              <div className="text-[12px] opacity-85 mt-1">{t.condition}</div>
+            </div>
+            <button onClick={() => onQuickAction('recommendation')}
+              className="h-10 px-3 rounded-full bg-white/15 border border-white/25 text-[12px] font-semibold backdrop-blur flex items-center gap-1">
+              Continue <IconArrowRight size={14} />
+            </button>
+          </div>
+          <div className="mt-4 h-1.5 rounded-full bg-white/20 overflow-hidden">
+            <div className="h-full bg-white grow-bar" style={{ width: '58%' }} />
+          </div>
+        </div>
+      </div>
+      )}
+
+      {}
+      <div className="px-5 mt-5">
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider">QUICK ACTIONS</div>
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          {quickActions.map(({ id, label, Icon, tone }) => (
+            <button key={id} onClick={() => onQuickAction(id)}
+              className="bg-white border border-gray-100 rounded-[14px] p-3 text-left active:bg-gray-50 shadow-card">
+              <div className={`h-9 w-9 rounded-[10px] flex items-center justify-center ${tone}`}>
+                <Icon size={18} />
+              </div>
+              <div className="mt-2 text-[13px] font-semibold text-gray-900">{label}</div>
+              <div className="text-[11px] text-gray-500">Tap to open</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {}
+      <div className="px-5 mt-5">
+        <div className="flex items-end justify-between">
+          <div className="text-[11px] font-semibold text-gray-400 tracking-wider">NEXT EXERCISE</div>
+          <button onClick={() => onQuickAction('recommendation')} className="text-[12px] font-semibold text-teal-700">See all</button>
+        </div>
+        <Card className="mt-2 overflow-hidden">
+          <div className="relative">
+            <StretchScene className="w-full h-[130px]" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-11 w-11 rounded-full bg-white/95 shadow flex items-center justify-center">
+                <IconPlay size={18} className="text-teal-700 translate-x-0.5" />
+              </div>
+            </div>
+            <div className="absolute top-2 left-2">
+              <Chip tone="teal">Moderate</Chip>
+            </div>
+          </div>
+          <div className="p-3.5">
+            <div className="text-[14px] font-semibold text-gray-900">Knee-to-chest stretch</div>
+            <div className="text-[12px] text-gray-500 mt-0.5">3 sets · 12 reps · ~6 min</div>
+          </div>
+        </Card>
+      </div>
+
+      {}
+      <div className="px-5 mt-5 mb-4">
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider">UPCOMING</div>
+        <Card className="mt-2 p-3.5 flex items-center gap-3">
+          <div className="h-11 w-11 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+            <IconVideo size={18} className="text-teal-700" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold text-gray-900 truncate">{t.doctorFull}</div>
+            <div className="text-[12px] text-gray-500">Thu, May 7 · 10:30 AM · Video call</div>
+          </div>
+          <button onClick={onBook}
+            className="h-9 px-3 rounded-[10px] bg-teal-50 text-teal-700 text-[12px] font-semibold">Join</button>
+        </Card>
+      </div>
+    </Screen>
+  );
+};
+
+const ProgressScreen = ({ onTabTap }) => {
+  const t = useT();
+  const progress = getProgress(t.email);
+  const streak = calculateStreak(progress.activeDates);
+  const totalSessions = progress.completedExercises.length;
+
+  const today = new Date();
+  const dayLabels = ['M','T','W','T','F','S','S'];
+  const weeklyBars = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - 6 + i);
+    const ds = d.toISOString().slice(0, 10);
+    return Math.min(progress.completedExercises.filter(c => c.date === ds).length * 30, 100);
+  });
+
+  const weekStart = new Date(today); weekStart.setDate(today.getDate() - 6);
+  const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const adherencePct = progress.activeDates.length === 0 ? 0
+    : Math.min(Math.round((progress.activeDates.length / 30) * 100), 100);
+
+  const achievements = [
+    { label: '7-day streak', got: streak >= 7 },
+    { label: '10 exercises', got: totalSessions >= 10 },
+    { label: 'First session', got: totalSessions >= 1 },
+  ];
+
+  return (
+    <Screen withTabs activeTab="progress" onTabTap={onTabTap} bg="bg-[#F7FAF9]">
+      <div className="px-5 pt-3 pb-3 bg-white">
+        <h1 className="text-[22px] font-bold text-gray-900">Your progress</h1>
+        <p className="text-[13px] text-gray-500">{fmt(weekStart)} – {fmt(today)}</p>
+      </div>
+
+      <div className="px-5 mt-4 grid grid-cols-3 gap-3">
+        {[
+          { label: 'Adherence', value: adherencePct + '%', tone: 'text-teal-700' },
+          { label: 'Sessions',  value: String(totalSessions), tone: 'text-gray-900' },
+          { label: 'Streak',    value: streak + 'd', tone: 'text-emerald-600' },
+        ].map((s) => (
+          <Card key={s.label} className="p-3">
+            <div className={`text-[20px] font-bold ${s.tone}`}>{s.value}</div>
+            <div className="text-[11px] text-gray-500 mt-0.5">{s.label}</div>
+          </Card>
+        ))}
+      </div>
+
+      {}
+      <div className="px-5 mt-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[13px] font-semibold text-gray-900">Weekly activity</div>
+              <div className="text-[11px] text-gray-500">Minutes per day</div>
+            </div>
+            <Chip tone="teal"><IconFire size={12} /> On track</Chip>
+          </div>
+          <div className="mt-4 h-36 flex items-end gap-2">
+            {weeklyBars.map((h, i) => (
+              <div key={i} className="flex-1 h-full flex flex-col items-center gap-2">
+                <div className="w-full flex-1 rounded-[6px] bg-teal-100 relative overflow-hidden">
+                  <div
+                    className="absolute inset-x-0 bottom-0 bg-teal-500 grow-bar"
+                    style={{ height: `${h}%`, animationDelay: `${i * 60}ms` }}
+                  />
+                </div>
+                <div className="text-[10px] text-gray-400 font-medium">{dayLabels[i]}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      {}
+      <div className="px-5 mt-4">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div className="text-[13px] font-semibold text-gray-900">Pain trend</div>
+            <span className="text-[11px] font-semibold text-emerald-600">↓ 4 points</span>
+          </div>
+          <svg viewBox="0 0 300 110" className="w-full h-28 mt-2" aria-hidden="true">
+            <defs>
+              <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#14B8A6" stopOpacity="0.25" />
+                <stop offset="100%" stopColor="#14B8A6" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            <path d="M0 30 L50 40 L100 55 L150 50 L200 70 L250 80 L300 92 L300 110 L0 110 Z" fill="url(#pg)" />
+            <path d="M0 30 L50 40 L100 55 L150 50 L200 70 L250 80 L300 92"
+                  stroke="#0F766E" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            {[[0,30],[50,40],[100,55],[150,50],[200,70],[250,80],[300,92]].map(([x,y],i)=>(
+              <circle key={i} cx={x} cy={y} r="3" fill="#0F766E" />
+            ))}
+          </svg>
+          <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <span>Mar 30</span><span>Apr 13</span><span>Apr 26</span>
+          </div>
+        </Card>
+      </div>
+
+      <div className="px-5 mt-4 mb-6">
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider">ACHIEVEMENTS</div>
+        <div className="grid grid-cols-3 gap-3 mt-2">
+          {achievements.map((a) => (
+            <Card key={a.label} className={`p-3 flex flex-col items-center text-center ${a.got ? '' : 'opacity-50'}`}>
+              <AchievementBadge className="w-14 h-14" />
+              <div className="text-[11px] font-semibold text-gray-800 mt-1">{a.label}</div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </Screen>
+  );
+};
+
+const RemindersScreen = ({ onBack }) => {
+  const t = useT();
+  const storageKey = 'physiocare_reminders_' + t.email;
+  const defaultItems = [
+    { id: 1, label: 'Morning exercise session', time: '07:30', days: 'Every day', on: false },
+    { id: 2, label: 'Hydration check', time: '11:00', days: 'Weekdays', on: false },
+    { id: 3, label: 'Evening stretches', time: '20:00', days: 'Mon, Wed, Fri', on: false },
+    { id: 4, label: 'Pain check-in', time: '21:30', days: 'Every day', on: false },
+  ];
+
+  const [items, setItems] = React.useState(() => {
+    const saved = localStorage.getItem(storageKey);
+    return saved ? JSON.parse(saved) : defaultItems;
+  });
+  const [showAdd, setShowAdd] = React.useState(false);
+  const [newLabel, setNewLabel] = React.useState('');
+  const [newTime, setNewTime] = React.useState('08:00');
+  const [permDenied, setPermDenied] = React.useState(false);
+
+  const scheduleNotif = (label, time) => {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    const [h, m] = time.split(':').map(Number);
+    const fire = new Date(); fire.setHours(h, m, 0, 0);
+    if (fire <= new Date()) fire.setDate(fire.getDate() + 1);
+    setTimeout(() => new Notification('PhysioCare', { body: label }), fire - new Date());
+  };
+
+  const persist = (updated) => {
+    setItems(updated);
+    localStorage.setItem(storageKey, JSON.stringify(updated));
+  };
+
+  const doToggle = (id) => {
+    const updated = items.map(it => {
+      if (it.id !== id) return it;
+      const next = { ...it, on: !it.on };
+      if (next.on) scheduleNotif(next.label, next.time);
+      return next;
+    });
+    persist(updated);
+  };
+
+  const toggle = (id) => {
+    if (typeof Notification === 'undefined') { doToggle(id); return; }
+    if (Notification.permission === 'granted') { doToggle(id); return; }
+    if (Notification.permission === 'denied') { setPermDenied(true); doToggle(id); return; }
+    Notification.requestPermission().then(p => { if (p === 'granted') doToggle(id); else { setPermDenied(true); doToggle(id); } });
+  };
+
+  const addReminder = () => {
+    if (!newLabel.trim()) return;
+    const item = { id: Date.now(), label: newLabel.trim(), time: newTime, days: 'Every day', on: true };
+    scheduleNotif(item.label, item.time);
+    persist([...items, item]);
+    setNewLabel(''); setNewTime('08:00'); setShowAdd(false);
+  };
+
+  const removeReminder = (id) => persist(items.filter(it => it.id !== id));
+
+  const fmt12 = (t24) => {
+    const [h, m] = t24.split(':').map(Number);
+    const ap = h >= 12 ? 'PM' : 'AM';
+    return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ' ' + ap;
+  };
+
+  return (
+    <Screen bg="bg-[#F7FAF9]">
+      <NavHeader title="Reminders" onBack={onBack} right={
+        <button onClick={() => setShowAdd(s => !s)}
+          className="h-9 w-9 rounded-full bg-teal-500 text-white flex items-center justify-center">
+          <span className="text-lg font-semibold leading-none -mt-0.5">{showAdd ? '×' : '+'}</span>
+        </button>
+      } />
+
+      {permDenied && (
+        <div className="mx-5 mt-2 p-3 rounded-[10px] bg-amber-50 border border-amber-100 text-amber-800 text-[12px]">
+          Notifications are blocked. Enable them in your browser settings to receive reminders.
+        </div>
+      )}
+
+      {showAdd && (
+        <div className="mx-5 mt-3">
+          <Card className="p-4 space-y-3">
+            <div className="text-[13px] font-semibold text-gray-900">New reminder</div>
+            <div className="h-[44px] rounded-[10px] border border-gray-200 bg-white flex items-center px-3 focus-within:border-teal-500">
+              <input
+                type="text" placeholder="Reminder label" value={newLabel}
+                onChange={e => setNewLabel(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-[13px] text-gray-900 placeholder:text-gray-400"
+              />
+            </div>
+            <div className="h-[44px] rounded-[10px] border border-gray-200 bg-white flex items-center px-3 focus-within:border-teal-500">
+              <input
+                type="time" value={newTime} onChange={e => setNewTime(e.target.value)}
+                className="flex-1 bg-transparent outline-none text-[13px] text-gray-900"
+              />
+            </div>
+            <button onClick={addReminder}
+              className="w-full h-11 rounded-[10px] bg-teal-500 text-white text-[13px] font-semibold active:bg-teal-700">
+              Add reminder
+            </button>
+          </Card>
+        </div>
+      )}
+
+      <div className="px-5 mt-4">
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider mb-2">YOUR REMINDERS</div>
+        {items.length === 0 ? (
+          <Card className="p-6 flex flex-col items-center text-center gap-2">
+            <IconBell size={28} className="text-gray-300" />
+            <div className="text-[13px] font-semibold text-gray-500">No reminders yet</div>
+            <div className="text-[12px] text-gray-400">Tap + to add your first reminder</div>
+          </Card>
+        ) : (
+          <Card className="divide-y divide-gray-100">
+            {items.map((it) => (
+              <div key={it.id} className="p-3.5 flex items-center gap-3">
+                <div className={`h-9 w-9 rounded-[10px] flex items-center justify-center shrink-0 ${it.on ? 'bg-teal-100 text-teal-700' : 'bg-gray-100 text-gray-400'}`}>
+                  <IconBell size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className={`text-[13px] font-semibold truncate ${it.on ? 'text-gray-900' : 'text-gray-400'}`}>{it.label}</div>
+                  <div className="text-[11px] text-gray-500">{fmt12(it.time)} · {it.days}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => toggle(it.id)}
+                    className={`relative w-11 h-[26px] rounded-full transition-colors ${it.on ? 'bg-teal-500' : 'bg-gray-200'}`}>
+                    <span className={`absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform ${it.on ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
+                  </button>
+                  <button onClick={() => removeReminder(it.id)}
+                    className="h-7 w-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 active:bg-red-50 active:text-red-500 text-[14px] font-bold">
+                    ×
+                  </button>
+                </div>
+              </div>
+            ))}
+          </Card>
+        )}
+        <div className="mt-5 mb-6 text-[11px] text-gray-400 text-center">
+          PhysioCare by Micy · Stay consistent to recover faster.
+        </div>
+      </div>
+    </Screen>
+  );
+};
+
+const ProfileScreen = ({ onTabTap, onLogout, onNavigate }) => {
+  const t = useT();
+  
+  const menuItems = [
+    { id: 'personalInfo',    label: 'Personal information', Icon: IconUser   },
+    { id: 'healthProfile',   label: 'Health profile',       Icon: IconHeart  },
+    { id: 'notifications',   label: 'Notifications',        Icon: IconBell   },
+    { id: 'privacySecurity', label: 'Privacy & security',   Icon: IconShield },
+    { id: 'helpSupport',     label: 'Help & support',       Icon: IconInfo   },
+  ];
+  return (
+  <Screen withTabs activeTab="profile" onTabTap={onTabTap} bg="bg-[#F7FAF9]">
+    <div className="px-5 pt-3 pb-5 bg-white flex items-center gap-3">
+      <div className="h-14 w-14 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold text-lg shrink-0">{t.patientInitial}</div>
+      <div className="min-w-0">
+        <div className="text-[17px] font-bold text-gray-900 truncate">{t.patientFull}</div>
+        <div className="text-[12px] text-gray-500 truncate">{t.email}</div>
+        <div className="text-[11px] text-gray-400 mt-0.5">{t.condition}</div>
+      </div>
+    </div>
+    <div className="px-5 mt-4 space-y-3">
+      {menuItems.map(({ id, label, Icon }) => (
+        <button key={id} onClick={() => onNavigate(id)}
+          className="w-full bg-white rounded-[14px] shadow-card border border-gray-100 p-3.5 flex items-center gap-3 active:bg-gray-50 text-left">
+          <div className="h-9 w-9 rounded-[10px] bg-gray-100 flex items-center justify-center text-gray-600 shrink-0">
+            <Icon size={16} />
+          </div>
+          <div className="flex-1 text-[13px] font-semibold text-gray-900">{label}</div>
+          <IconChevronRight size={16} className="text-gray-300 shrink-0" />
+        </button>
+      ))}
+      <button onClick={onLogout} className="w-full mt-2 h-12 rounded-[12px] border border-gray-200 bg-white text-[13px] font-semibold text-gray-700 flex items-center justify-center gap-2 active:bg-gray-50">
+        <IconLogout size={16} /> Log out
+      </button>
+    </div>
+  </Screen>
+  );
+};
+
+const PersonalInfoScreen = ({ onBack, onSave }) => {
+  const t = useT();
+
+  
+  const [name,      setName]      = React.useState(t.patientFull);
+  const [email,     setEmail]     = React.useState(t.email);
+  const [phone,     setPhone]     = React.useState(t.phone);
+  const [age,       setAge]       = React.useState(t.age);
+  const [gender,    setGender]    = React.useState(t.gender);
+  const [condition, setCondition] = React.useState(t.condition);
+  const [emergency, setEmergency] = React.useState(t.emergencyContact);
+  const [error,     setError]     = React.useState('');
+  const [success,   setSuccess]   = React.useState(false);
+
+  const CONDITIONS = [
+    'Knee rehabilitation', 'Lower back pain', 'Shoulder injury',
+    'Hip replacement recovery', 'Post-surgery rehab', 'Neck pain', 'General physiotherapy',
+  ];
+  const GENDERS = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
+
+  const handleSave = () => {
+    setError('');
+    if (!name.trim())                                   { setError('Full name is required.'); return; }
+    if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) { setError('Please enter a valid email address.'); return; }
+
+    
+    const users = JSON.parse(localStorage.getItem('physiocare_users') || '[]');
+
+    
+    const idx = users.findIndex(u => u.email === t.email);
+    if (idx === -1) { setError('Account not found. Please log out and back in.'); return; }
+
+    
+    const emailTaken = users.some((u, i) => i !== idx && u.email.toLowerCase() === email.trim().toLowerCase());
+    if (emailTaken) { setError('That email is already used by another account.'); return; }
+
+    
+    const updatedUser = {
+      ...users[idx],
+      name:             name.trim(),
+      email:            email.trim().toLowerCase(),
+      phone:            phone.trim(),
+      age,
+      gender,
+      condition,
+      emergencyContact: emergency.trim(),
+    };
+
+    
+    users[idx] = updatedUser;
+    localStorage.setItem('physiocare_users', JSON.stringify(users));
+
+    
+    localStorage.setItem('physiocare_session', JSON.stringify({ email: updatedUser.email }));
+
+    
+    onSave(updatedUser);
+
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 2500);
+  };
+
+  return (
+    <Screen bg="bg-[#F7FAF9]">
+      <NavHeader title="Personal information" onBack={onBack} />
+      <div className="px-5 pb-10 space-y-3">
+        <TextField label="Full name" placeholder="Your full name"
+          Icon={IconUser} value={name} onChange={setName} />
+        <TextField label="Email" type="email" placeholder="your@email.com"
+          Icon={IconMail} value={email} onChange={setEmail} />
+        <TextField label="Phone number" type="tel" placeholder="+255 700 000 000"
+          Icon={IconPhone} value={phone} onChange={setPhone} />
+        <TextField label="Age" placeholder="E.g. 28"
+          Icon={IconUser} value={age} onChange={setAge} />
+
+        {}
+        <label className="block">
+          <div className="text-[12px] font-medium text-gray-600 mb-1.5">Gender</div>
+          <div className="h-[52px] rounded-[12px] border border-gray-200 bg-white flex items-center px-3 focus-within:border-teal-500 transition-colors">
+            <IconUser size={18} className="text-gray-400 mr-2 shrink-0" />
+            <select value={gender} onChange={e => setGender(e.target.value)}
+              className="flex-1 bg-transparent outline-none text-[14px] text-gray-900 appearance-none cursor-pointer">
+              <option value="">Select gender</option>
+              {GENDERS.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+        </label>
+
+        {}
+        <label className="block">
+          <div className="text-[12px] font-medium text-gray-600 mb-1.5">Condition / goal</div>
+          <div className="h-[52px] rounded-[12px] border border-gray-200 bg-white flex items-center px-3 focus-within:border-teal-500 transition-colors">
+            <IconHeart size={18} className="text-gray-400 mr-2 shrink-0" />
+            <select value={condition} onChange={e => setCondition(e.target.value)}
+              className="flex-1 bg-transparent outline-none text-[14px] text-gray-900 appearance-none cursor-pointer">
+              {CONDITIONS.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </label>
+
+        <TextField label="Emergency contact" placeholder="Name & phone number"
+          Icon={IconPhone} value={emergency} onChange={setEmergency} />
+
+        {}
+        {error && (
+          <div className="p-3 rounded-[10px] bg-red-50 border border-red-100 text-red-700 text-[12px] font-medium">
+            {error}
+          </div>
+        )}
+
+        <div className="pt-2">
+          <PrimaryButton onClick={handleSave} className={success ? '!bg-emerald-500' : ''}>
+            {success
+              ? <span className="inline-flex items-center gap-2 pop"><IconCheck size={18} /> Saved!</span>
+              : 'Save changes'}
+          </PrimaryButton>
+        </div>
+      </div>
+    </Screen>
+  );
+};
+
+const PrivacySecurityScreen = ({ onBack, onUpdateUser, onDeleteAccount }) => {
+  const t = useT();
+
+  
+  const [currentPwd, setCurrentPwd] = React.useState('');
+  const [newPwd,     setNewPwd]     = React.useState('');
+  const [confirmPwd, setConfirmPwd] = React.useState('');
+  const [pwdError,   setPwdError]   = React.useState('');
+  const [pwdSuccess, setPwdSuccess] = React.useState(false);
+
+  
+  const [healthSharing, setHealthSharing] = React.useState(t.healthSharing !== false);
+  const [emailNotif,    setEmailNotif]    = React.useState(t.emailNotifications !== false);
+
+  
+  const [confirmDelete, setConfirmDelete] = React.useState(false);
+
+  
+  const handleChangePassword = () => {
+    setPwdError('');
+    if (!currentPwd)           { setPwdError('Please enter your current password.'); return; }
+    if (newPwd.length < 8)     { setPwdError('New password must be at least 8 characters.'); return; }
+    if (newPwd !== confirmPwd) { setPwdError('New passwords do not match.'); return; }
+
+    
+    const users = JSON.parse(localStorage.getItem('physiocare_users') || '[]');
+    const idx = users.findIndex(u => u.email === t.email);
+    if (idx === -1 || users[idx].password !== currentPwd) {
+      setPwdError('Current password is incorrect.');
+      return;
+    }
+
+    
+    users[idx] = { ...users[idx], password: newPwd };
+    localStorage.setItem('physiocare_users', JSON.stringify(users));
+
+    setCurrentPwd(''); setNewPwd(''); setConfirmPwd('');
+    setPwdSuccess(true);
+    setTimeout(() => setPwdSuccess(false), 2500);
+  };
+
+  
+  
+  const updatePreference = (key, value) => {
+    const users = JSON.parse(localStorage.getItem('physiocare_users') || '[]');
+    const idx = users.findIndex(u => u.email === t.email);
+    if (idx !== -1) {
+      const updatedUser = { ...users[idx], [key]: value };
+      users[idx] = updatedUser;
+      localStorage.setItem('physiocare_users', JSON.stringify(users));
+      onUpdateUser(updatedUser); 
+    }
+  };
+
+  
+  const handleDeleteAccount = () => {
+    
+    const users = JSON.parse(localStorage.getItem('physiocare_users') || '[]');
+    const updated = users.filter(u => u.email !== t.email);
+    localStorage.setItem('physiocare_users', JSON.stringify(updated));
+    
+    localStorage.removeItem('physiocare_session');
+    
+    onDeleteAccount();
+  };
+
+  return (
+    <Screen bg="bg-[#F7FAF9]">
+      <NavHeader title="Privacy & security" onBack={onBack} />
+      <div className="px-5 pb-10 space-y-4">
+
+        {}
+        <Card className="p-4 flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
+            <IconMail size={16} className="text-teal-700" />
+          </div>
+          <div>
+            <div className="text-[11px] text-gray-500">Logged in as</div>
+            <div className="text-[13px] font-semibold text-gray-900">{t.email}</div>
+          </div>
+        </Card>
+
+        {}
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider">CHANGE PASSWORD</div>
+        <Card className="p-4 space-y-3">
+          <TextField label="Current password" type="password" placeholder="••••••••"
+            Icon={IconLock} value={currentPwd} onChange={setCurrentPwd} />
+          <TextField label="New password" type="password" placeholder="At least 8 characters"
+            Icon={IconLock} value={newPwd} onChange={setNewPwd} />
+          <TextField label="Confirm new password" type="password" placeholder="Repeat new password"
+            Icon={IconLock} value={confirmPwd} onChange={setConfirmPwd} />
+          {pwdError && (
+            <div className="p-3 rounded-[10px] bg-red-50 border border-red-100 text-red-700 text-[12px] font-medium">
+              {pwdError}
+            </div>
+          )}
+          <PrimaryButton onClick={handleChangePassword} className={pwdSuccess ? '!bg-emerald-500' : ''}>
+            {pwdSuccess
+              ? <span className="inline-flex items-center gap-2 pop"><IconCheck size={18} /> Password updated</span>
+              : 'Update password'}
+          </PrimaryButton>
+        </Card>
+
+        {}
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider">PRIVACY</div>
+        <Card className="divide-y divide-gray-100">
+          {}
+          <div className="p-4 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-semibold text-gray-900">Health data sharing</div>
+              <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">Allow anonymised data to improve PhysioCare</div>
+            </div>
+            <button
+              onClick={() => { const next = !healthSharing; setHealthSharing(next); updatePreference('healthSharing', next); }}
+              className={`relative w-11 h-[26px] shrink-0 rounded-full transition-colors ${healthSharing ? 'bg-teal-500' : 'bg-gray-200'}`}>
+              <span className={`absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform ${healthSharing ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
+            </button>
+          </div>
+          {}
+          <div className="p-4 flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-semibold text-gray-900">Email notifications</div>
+              <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">Receive recovery reminders and updates by email</div>
+            </div>
+            <button
+              onClick={() => { const next = !emailNotif; setEmailNotif(next); updatePreference('emailNotifications', next); }}
+              className={`relative w-11 h-[26px] shrink-0 rounded-full transition-colors ${emailNotif ? 'bg-teal-500' : 'bg-gray-200'}`}>
+              <span className={`absolute top-[3px] h-5 w-5 rounded-full bg-white shadow transition-transform ${emailNotif ? 'translate-x-[22px]' : 'translate-x-[3px]'}`} />
+            </button>
+          </div>
+        </Card>
+
+        {}
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider">DANGER ZONE</div>
+        {!confirmDelete ? (
+          <button onClick={() => setConfirmDelete(true)}
+            className="w-full h-12 rounded-[12px] border border-red-200 bg-red-50 text-red-700 text-[13px] font-semibold flex items-center justify-center gap-2 active:bg-red-100">
+            Delete my account
+          </button>
+        ) : (
+          <Card className="p-4 border border-red-200">
+            <div className="text-[14px] font-bold text-gray-900 mb-1">Are you sure?</div>
+            <div className="text-[12px] text-gray-500 mb-4 leading-relaxed">
+              This permanently deletes your account and all data. This action cannot be undone.
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(false)}
+                className="flex-1 h-11 rounded-[10px] border border-gray-200 bg-white text-[13px] font-semibold text-gray-700 active:bg-gray-50">
+                Cancel
+              </button>
+              <button onClick={handleDeleteAccount}
+                className="flex-1 h-11 rounded-[10px] bg-red-600 active:bg-red-700 text-white text-[13px] font-semibold">
+                Yes, delete
+              </button>
+            </div>
+          </Card>
+        )}
+      </div>
+    </Screen>
+  );
+};
+
+const HelpSupportScreen = ({ onBack }) => {
+  const t = useT();
+
+  
+  const [openFaq, setOpenFaq] = React.useState(null);
+
+  
+  const [form,      setForm]      = React.useState({ name: t.patientFull, email: t.email, message: '' });
+  const [submitted, setSubmitted] = React.useState(false);
+  const [formError, setFormError] = React.useState('');
+
+  const faqs = [
+    { q: 'How do I track my progress?',
+      a: 'Open the Progress tab from the bottom navigation. You can see weekly activity charts, pain trend, and achievement badges there.' },
+    { q: 'Can I change my condition / goal?',
+      a: 'Yes — go to Profile → Personal information and update the Condition / goal field. Your plan will reflect the change immediately.' },
+    { q: 'What does the Recovery streak mean?',
+      a: 'Your streak counts consecutive days you completed at least one exercise. Keep it going for the best recovery results!' },
+    { q: 'How do I book a physiotherapy consultation?',
+      a: "Tap the 'Join' button on your dashboard, or open Today's plan and tap 'Book consultation'. Pick a date, time slot, and session type." },
+    { q: 'Is my health data private?',
+      a: 'All data is stored locally on your device using localStorage. Nothing is sent to a server in this version of the app.' },
+    { q: 'How do I reset my password?',
+      a: "Go to Profile → Privacy & security → Change password. You'll need to enter your current password first." },
+  ];
+
+  
+  const handleSubmit = () => {
+    setFormError('');
+    if (!form.name.trim())    { setFormError('Please enter your name.'); return; }
+    if (!form.email.trim())   { setFormError('Please enter your email.'); return; }
+    if (!form.message.trim()) { setFormError('Please write a message.'); return; }
+    setSubmitted(true);
+    setForm(f => ({ ...f, message: '' }));
+    setTimeout(() => setSubmitted(false), 4000);
+  };
+
+  return (
+    <Screen bg="bg-[#F7FAF9]">
+      <NavHeader title="Help & support" onBack={onBack} />
+      <div className="px-5 pb-10">
+
+        {}
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider mb-2">FREQUENTLY ASKED QUESTIONS</div>
+        <Card className="divide-y divide-gray-100 mb-5">
+          {faqs.map((faq, i) => (
+            <div key={i}>
+              <button onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                className="w-full p-3.5 flex items-center gap-2 text-left active:bg-gray-50">
+                <div className="flex-1 text-[13px] font-semibold text-gray-900 leading-snug">{faq.q}</div>
+                <IconChevronRight size={16}
+                  className={`text-gray-400 shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-90' : ''}`} />
+              </button>
+              {openFaq === i && (
+                <div className="px-3.5 pb-3.5 text-[12px] text-gray-600 leading-relaxed">{faq.a}</div>
+              )}
+            </div>
+          ))}
+        </Card>
+
+        {}
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider mb-2">EMERGENCY PHYSIOTHERAPY</div>
+        <Card className="p-4 flex items-center gap-3 mb-5">
+          <div className="h-11 w-11 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <IconPhone size={18} className="text-red-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold text-gray-900">PhysioCare Emergency Line</div>
+            <div className="text-[12px] text-gray-500">Available 24/7 · +255 800 123 456</div>
+          </div>
+          <a href="tel:+255800123456"
+            className="h-9 px-3 rounded-[10px] bg-red-50 text-red-600 text-[12px] font-semibold flex items-center">
+            Call
+          </a>
+        </Card>
+
+        {}
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider mb-2">HOW TO USE PHYSIOCARE</div>
+        <Card className="p-4 mb-5 space-y-3">
+          {[
+            { GuideIcon: IconHome,     title: 'Dashboard',  desc: 'Your daily hub — streak, quick actions, next exercise, and upcoming consultations.' },
+            { GuideIcon: IconDumbbell, title: 'Exercises',  desc: 'Browse and complete exercise videos prescribed by your physiotherapist.' },
+            { GuideIcon: IconChart,    title: 'Progress',   desc: 'Track weekly activity, pain levels, and earn achievement badges.' },
+            { GuideIcon: IconUser,     title: 'Profile',    desc: 'Manage personal info, privacy settings, reminders, and account details.' },
+          ].map(({ GuideIcon, title, desc }) => (
+            <div key={title} className="flex items-start gap-3">
+              <div className="h-9 w-9 rounded-[10px] bg-teal-100 flex items-center justify-center shrink-0">
+                <GuideIcon size={16} className="text-teal-700" />
+              </div>
+              <div>
+                <div className="text-[13px] font-semibold text-gray-900">{title}</div>
+                <div className="text-[12px] text-gray-500 leading-snug mt-0.5">{desc}</div>
+              </div>
+            </div>
+          ))}
+        </Card>
+
+        {}
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider mb-2">CONTACT SUPPORT</div>
+        {submitted ? (
+          <Card className="p-6 flex flex-col items-center text-center gap-3">
+            <div className="h-14 w-14 rounded-full bg-emerald-100 flex items-center justify-center pop">
+              <IconCheck size={22} className="text-emerald-600" />
+            </div>
+            <div className="text-[15px] font-bold text-gray-900">Message sent!</div>
+            <div className="text-[12px] text-gray-500">We'll get back to you within 24 hours.</div>
+          </Card>
+        ) : (
+          <Card className="p-4 space-y-3">
+            <TextField label="Your name" placeholder="Full name"
+              Icon={IconUser} value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} />
+            <TextField label="Email" type="email" placeholder="your@email.com"
+              Icon={IconMail} value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} />
+            {/* Textarea — multi-line input, not a TextField since it needs more rows */}
+            <label className="block">
+              <div className="text-[12px] font-medium text-gray-600 mb-1.5">Message</div>
+              <textarea
+                placeholder="Describe your issue or question…"
+                value={form.message}
+                onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                rows={4}
+                className="w-full rounded-[12px] border border-gray-200 bg-white px-3 py-3 text-[14px] text-gray-900 placeholder:text-gray-400 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100 transition-colors resize-none"
+              />
+            </label>
+            {formError && (
+              <div className="p-3 rounded-[10px] bg-red-50 border border-red-100 text-red-700 text-[12px] font-medium">
+                {formError}
+              </div>
+            )}
+            <PrimaryButton onClick={handleSubmit}>Send message</PrimaryButton>
+          </Card>
+        )}
+      </div>
+    </Screen>
+  );
+};
+
+Object.assign(window, {
+  DashboardScreen, ExercisesScreen, ProgressScreen, RemindersScreen, ProfileScreen,
+  PersonalInfoScreen, PrivacySecurityScreen, HelpSupportScreen,
+  calculateStreak, getProgress, saveProgress,
+});
+
+/* ===== src/screens-detail.jsx ===== */
+// Detail / flow screens: Assessment, Recommendation, Exercise Details, Consultation.
+
+const AssessmentScreen = ({ onBack, onComplete }) => {
+  const steps = [
+    {
+      q: 'Where is your primary pain?',
+      opts: ['Lower back', 'Knee', 'Shoulder', 'Neck', 'Hip'],
+    },
+    {
+      q: 'How severe is the pain today?',
+      opts: ['Mild (1–3)', 'Moderate (4–6)', 'Severe (7–10)'],
+    },
+    {
+      q: 'How long have you had this pain?',
+      opts: ['Less than 1 week', '1–4 weeks', '1–3 months', 'More than 3 months'],
+    },
+    {
+      q: 'What\'s your recovery goal?',
+      opts: ['Return to sport', 'Everyday comfort', 'Post-surgery rehab', 'Build strength'],
+    },
+  ];
+  const [step, setStep] = React.useState(0);
+  const [answers, setAnswers] = React.useState({});
+  const pct = ((step) / steps.length) * 100;
+  const current = steps[step];
+
+  const pick = (opt) => {
+    setAnswers({ ...answers, [step]: opt });
+    if (step < steps.length - 1) setTimeout(() => setStep(step + 1), 180);
+    else setTimeout(onComplete, 240);
+  };
+
+  return (
+    <Screen bg="bg-white">
+      <NavHeader title="Assessment" onBack={step === 0 ? onBack : () => setStep(step - 1)}
+        right={<div className="text-[11px] font-semibold text-gray-400">{step + 1}/{steps.length}</div>} />
+      <div className="px-5">
+        <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+          <div className="h-full bg-teal-500 transition-all duration-500" style={{ width: `${pct + 100/steps.length}%` }} />
+        </div>
+      </div>
+
+      <div className="px-5 mt-6">
+        <WaveHero className="rounded-[16px] h-28 w-full" />
+      </div>
+
+      <div className="px-5 mt-5">
+        <div className="text-[11px] font-semibold text-teal-700 tracking-wider">STEP {step + 1}</div>
+        <h2 className="text-[22px] font-bold text-gray-900 leading-tight mt-1">{current.q}</h2>
+        <p className="text-[13px] text-gray-500 mt-1">Tap the option that best describes you.</p>
+
+        <div className="mt-5 space-y-2.5">
+          {current.opts.map((opt) => {
+            const selected = answers[step] === opt;
+            return (
+              <button key={opt} onClick={() => pick(opt)}
+                className={`w-full text-left p-4 rounded-[12px] border flex items-center justify-between transition-colors
+                  ${selected ? 'border-teal-500 bg-teal-50' : 'border-gray-200 bg-white active:bg-gray-50'}`}>
+                <span className={`text-[14px] font-semibold ${selected ? 'text-teal-800' : 'text-gray-900'}`}>{opt}</span>
+                <span className={`h-5 w-5 rounded-full border flex items-center justify-center ${selected ? 'border-teal-500 bg-teal-500' : 'border-gray-300'}`}>
+                  {selected && <IconCheck size={12} className="text-white" />}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </Screen>
+  );
+};
+
+const EXERCISES = [
+    {
+      id: 1, title: 'Knee-to-chest stretch', meta: '3 sets \u00b7 12 reps \u00b7 6 min',
+      tone: 'teal', diff: 'Moderate',
+      videoSrc: 'https://cdn.pixabay.com/video/2022/10/12/134467-759723595_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/4056723/pexels-photo-4056723.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Lie flat on your back with both legs extended.',
+        'Slowly pull one knee toward your chest, keeping the other leg straight.',
+        'Hold for 20 seconds, breathing steadily.',
+        'Gently lower and repeat on the other side.',
+      ],
+    },
+    {
+      id: 2, title: 'Straight-leg raise', meta: '3 sets \u00b7 10 reps \u00b7 5 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/02/27/32937-395456375_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/3822906/pexels-photo-3822906.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Lie on your back with one knee bent, foot flat on the floor.',
+        'Tighten the thigh muscle on your straight leg.',
+        'Slowly raise the leg to the height of the opposite knee.',
+        'Hold 2 seconds, lower slowly. Repeat on both sides.',
+      ],
+    },
+    {
+      id: 3, title: 'Quad sets', meta: '3 sets \u00b7 10 reps \u00b7 5 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2022/10/12/134468-759723597_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/3768913/pexels-photo-3768913.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Sit or lie with your leg straight on a flat surface.',
+        'Tighten the muscles on top of your thigh by pressing the back of your knee down.',
+        'Hold the contraction for 5 seconds, then relax completely.',
+        'Repeat 10 times per set, then switch to the other leg.',
+      ],
+    },
+    {
+      id: 4, title: 'Hip flexor stretch', meta: '2 sets \u00b7 30 sec hold \u00b7 4 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/06/02/40910-426939628_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/4498546/pexels-photo-4498546.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Kneel on one knee with your other foot flat on the floor in front of you.',
+        'Keep your torso upright and gently shift your hips forward.',
+        'Feel the stretch in the front of your back hip and upper thigh.',
+        'Hold for 30 seconds, then switch sides.',
+      ],
+    },
+    {
+      id: 5, title: 'Heel slides', meta: '3 sets \u00b7 12 reps \u00b7 4 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2019/09/20/27089-361827446_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Lie on your back with both legs extended on a smooth surface.',
+        'Slowly slide one heel toward your buttocks, bending the knee.',
+        'Hold briefly at full bend, then slide the heel back out.',
+        'Repeat with the same leg, then switch sides.',
+      ],
+    },
+    {
+      id: 6, title: 'Hamstring stretch', meta: '2 sets · 30 sec hold · 4 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2019/09/20/27089-361827446_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/4056723/pexels-photo-4056723.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Sit on the floor or edge of a chair with one leg extended in front.',
+        'Keeping your back straight, hinge forward at the hips toward your toes.',
+        'Hold for 30 seconds, feeling the stretch along the back of your thigh.',
+        'Relax and repeat on the other leg.',
+      ],
+    },
+    {
+      id: 7, title: 'Glute bridge', meta: '3 sets · 12 reps · 5 min',
+      tone: 'teal', diff: 'Moderate',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/05/28/40401-425442542_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/3822906/pexels-photo-3822906.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Lie on your back with knees bent, feet flat on the floor hip-width apart.',
+        'Press through your heels and raise your hips toward the ceiling.',
+        'Squeeze your glutes at the top and hold for 2 seconds.',
+        'Lower slowly back down and repeat.',
+      ],
+    },
+    {
+      id: 8, title: 'Ankle mobility stretch', meta: '3 sets · 10 reps · 4 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/07/09/44283-438661755_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/3768913/pexels-photo-3768913.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Sit on a chair and lift one foot slightly off the floor.',
+        'Rotate your ankle slowly in large circles, 10 times clockwise.',
+        'Reverse direction for 10 circles counter-clockwise.',
+        'Switch to the other foot and repeat the same sequence.',
+      ],
+    },
+    {
+      id: 9, title: 'Seated spinal twist', meta: '2 sets · 30 sec hold · 4 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/06/02/40910-426939628_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/4498546/pexels-photo-4498546.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Sit upright in a chair with both feet flat on the floor.',
+        'Place your right hand on your left knee and rotate your torso gently to the left.',
+        'Hold for 30 seconds, breathing deeply and keeping your spine tall.',
+        'Return to center and repeat on the other side.',
+      ],
+    },
+    {
+      id: 10, title: 'Calf stretch', meta: '2 sets · 30 sec hold · 3 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2019/09/20/27089-361827446_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Stand facing a wall with both hands on the wall for support.',
+        'Step one foot back and keep that heel pressed flat on the floor.',
+        'Bend the front knee until you feel the stretch in the back calf.',
+        'Hold for 30 seconds, then switch legs.',
+      ],
+    },
+    {
+      id: 11, title: 'Wall shoulder slides', meta: '3 sets · 12 reps · 5 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/03/18/33912-400217220_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/4056723/pexels-photo-4056723.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Stand with your back flat against a wall, arms raised to 90\u00b0 with elbows bent.',
+        'Slowly slide your arms upward along the wall until fully extended overhead.',
+        'Pause briefly at the top, then slide back down to the start position.',
+        'Keep your back, head, and wrists in contact with the wall throughout.',
+      ],
+    },
+    {
+      id: 12, title: 'Clamshell hip exercise', meta: '3 sets · 12 reps · 5 min',
+      tone: 'teal', diff: 'Moderate',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/05/28/40401-425442542_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/3822906/pexels-photo-3822906.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Lie on your side with hips stacked and knees bent at approximately 45\u00b0.',
+        'Keeping your feet together, raise your top knee toward the ceiling.',
+        'Hold at the top for 2 seconds, then lower slowly.',
+        'Complete all reps on one side before switching.',
+      ],
+    },
+    {
+      id: 13, title: 'Bird dog core exercise', meta: '3 sets · 10 reps · 6 min',
+      tone: 'teal', diff: 'Moderate',
+      videoSrc: 'https://cdn.pixabay.com/video/2022/10/12/134468-759723597_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/3768913/pexels-photo-3768913.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Begin on all fours with hands under your shoulders and knees under your hips.',
+        'Extend your right arm and left leg simultaneously, keeping your back flat.',
+        'Hold for 3 seconds, then return to the starting position.',
+        'Alternate sides and maintain a stable, engaged core throughout.',
+      ],
+    },
+    {
+      id: 14, title: "Child's pose stretch", meta: '2 sets · 30 sec hold · 3 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/05/28/40401-425442542_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/4498546/pexels-photo-4498546.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Kneel on the floor and sit your hips back toward your heels.',
+        'Extend both arms forward and lower your chest toward the ground.',
+        'Hold for 30 seconds, breathing deeply into your lower back.',
+        'Gently walk your hands back in to return to the starting position.',
+      ],
+    },
+    {
+      id: 15, title: 'Seated neck stretch', meta: '3 sets · 20 sec hold · 4 min',
+      tone: 'teal', diff: 'Easy',
+      videoSrc: 'https://cdn.pixabay.com/video/2020/07/09/44283-438661755_large.mp4',
+      thumbnail: 'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+      steps: [
+        'Sit upright in a chair and gently drop your right ear toward your right shoulder.',
+        'Place your right hand lightly on the left side of your head for an added stretch.',
+        'Hold for 20 seconds, feeling the stretch along the left side of your neck.',
+        'Slowly return to center and repeat on the other side.',
+      ],
+    },
+];
+
+const RecommendationScreen = ({ onBack, onOpenExercise }) => {
+  const t = useT();
+  const exercises = EXERCISES;
+  return (
+    <Screen bg="bg-[#F7FAF9]">
+      <NavHeader title="Today's plan" onBack={onBack} />
+      <div className="px-5">
+        <div className="rounded-[16px] p-4 bg-gradient-to-br from-teal-500 to-teal-700 text-white">
+          <div className="flex items-center gap-2 text-[12px] opacity-90"><IconSparkle size={14} /> Personalised for you</div>
+          <div className="text-[20px] font-bold mt-1">{t.condition} — Day 14</div>
+          <div className="text-[12px] opacity-85 mt-1">{exercises.length} exercises · ~{exercises.reduce((s, e) => { const m = e.meta.match(/(\d+)\s*min/); return s + (m ? +m[1] : 5); }, 0)} minutes · Designed by {t.doctorFull}</div>
+          <div className="mt-3 flex gap-4 text-[12px]">
+            <div className="flex items-center gap-1"><IconFire size={14} /> 480 kcal week</div>
+            <div className="flex items-center gap-1"><IconHeart size={14} /> Low impact</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-5 mt-5 mb-5">
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] font-semibold text-gray-400 tracking-wider">EXERCISES</div>
+          <span className="text-[11px] text-gray-400">2 of 5 completed</span>
+        </div>
+        <div className="mt-2 space-y-2.5">
+          {exercises.map((ex, i) => (
+            <button key={ex.id} onClick={() => onOpenExercise(ex)}
+              className="w-full text-left bg-white rounded-[14px] border border-gray-100 shadow-card p-3 flex items-center gap-3 active:bg-gray-50">
+              <div className="h-14 w-14 rounded-[10px] bg-teal-100 flex items-center justify-center overflow-hidden shrink-0">
+                <StretchScene className="w-full h-full" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-gray-400">#{i + 1}</span>
+                  {i < 2 && <Chip tone="green"><IconCheck size={10} /> Done</Chip>}
+                </div>
+                <div className="text-[13px] font-semibold text-gray-900 mt-0.5 truncate">{ex.title}</div>
+                <div className="text-[11px] text-gray-500 truncate">{ex.meta}</div>
+              </div>
+              <Chip tone={ex.tone}>{ex.diff}</Chip>
+            </button>
+          ))}
+        </div>
+      </div>
+    </Screen>
+  );
+};
+
+const ExerciseDetailsScreen = ({ onBack, onTabTap, fromTab = false, exercise }) => {
+  const t = useT();
+  const ex = exercise || {
+    title: 'Knee-to-chest stretch',
+    meta: '3 sets \u00b7 12 reps \u00b7 6 min',
+    diff: 'Moderate',
+    videoSrc: 'https://cdn.pixabay.com/video/2022/10/12/134467-759723595_large.mp4',
+    thumbnail: 'https://images.pexels.com/photos/4056723/pexels-photo-4056723.jpeg?auto=compress&cs=tinysrgb&w=600&h=380&dpr=1',
+    steps: [
+      'Lie flat on your back with both legs extended.',
+      'Slowly pull one knee toward your chest, keeping the other leg straight.',
+      'Hold for 20 seconds, breathing steadily.',
+      'Gently lower and repeat on the other side.',
+    ],
+  };
+  const [playing, setPlaying] = React.useState(false);
+  const [done, setDone] = React.useState(false);
+
+  
+  React.useEffect(() => { setPlaying(false); }, [ex.id]);
+
+  const markDone = () => {
+    const today = new Date().toISOString().slice(0, 10);
+    const progress = getProgress(t.email);
+    const alreadyDone = progress.completedExercises.some(c => c.id === ex.id && c.date === today);
+    if (!alreadyDone) {
+      progress.completedExercises.push({ id: ex.id, title: ex.title, date: today });
+      if (!progress.activeDates.includes(today)) progress.activeDates.push(today);
+      saveProgress(t.email, progress);
+    }
+    setDone(true);
+    setTimeout(() => { setDone(false); onBack?.(); }, 1400);
+  };
+
+  
+  const content = (
+    <React.Fragment>
+      <NavHeader title={fromTab ? 'Exercises' : 'Exercise'} onBack={onBack}
+        right={<button className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center"><IconHeart size={16} className="text-gray-500" /></button>} />
+      <div className="px-5">
+        <div className="relative rounded-[16px] overflow-hidden bg-gray-900" style={{ height: 200 }}>
+          {playing ? (
+            <video
+              key={ex.videoSrc}
+              className="w-full h-full object-cover"
+              style={{ display: 'block' }}
+              src={ex.videoSrc}
+              autoPlay
+              muted
+              controls
+              playsInline
+            />
+          ) : (
+            <React.Fragment>
+              {ex.thumbnail
+                ? <img src={ex.thumbnail} className="w-full h-full object-cover" alt={ex.title}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                : <StretchScene className="w-full h-[200px]" />
+              }
+              <div className="absolute inset-0 flex items-center justify-center">
+                <button
+                  onClick={() => setPlaying(true)}
+                  className="h-16 w-16 rounded-full bg-white/90 shadow-lg flex items-center justify-center active:scale-95 transition-transform">
+                  <IconPlay size={22} className="text-teal-700 translate-x-0.5" />
+                </button>
+              </div>
+              <div className="absolute top-3 left-3"><Chip tone="teal">{ex.diff}</Chip></div>
+              <div className="absolute bottom-3 right-3 bg-black/60 text-white text-[11px] px-2 py-0.5 rounded-full">
+                {ex.meta?.match(/(\d+)\s*min/)?.[1] ? ex.meta.match(/(\d+)\s*min/)[1] + ':00' : '06:00'}
+              </div>
+            </React.Fragment>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <h1 className="text-[22px] font-bold text-gray-900 leading-tight">{ex.title}</h1>
+          <div className="text-[12px] text-gray-500 mt-0.5">{ex.meta}</div>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 gap-2.5">
+          {[
+            { label: 'Sets',     value: '3' },
+            { label: 'Reps',     value: '12' },
+            { label: 'Duration', value: '6 min' },
+          ].map((s) => (
+            <Card key={s.label} className="p-3 text-center">
+              <div className="text-[16px] font-bold text-gray-900">{s.value}</div>
+              <div className="text-[11px] text-gray-500">{s.label}</div>
+            </Card>
+          ))}
+        </div>
+
+        <div className="mt-5">
+          <div className="text-[13px] font-semibold text-gray-900">How to do it</div>
+          <ol className="mt-2 space-y-2.5">
+            {}
+            {(ex.steps || [
+              'Lie flat on your back with both legs extended.',
+              'Slowly pull one knee toward your chest, keeping the other leg straight.',
+              'Hold for 20 seconds, breathing steadily.',
+              'Gently lower and repeat on the other side.',
+            ]).map((txt, i) => (
+              <li key={i} className="flex gap-2.5">
+                <div className="h-5 w-5 rounded-full bg-teal-100 text-teal-700 text-[11px] font-bold flex items-center justify-center shrink-0">{i + 1}</div>
+                <div className="text-[13px] text-gray-700 leading-snug">{txt}</div>
+              </li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="mt-5 p-3 rounded-[12px] bg-amber-50 border border-amber-100 flex gap-2.5">
+          <IconInfo size={16} className="text-amber-600 mt-0.5 shrink-0" />
+          <div className="text-[12px] text-amber-800">
+            Stop if you feel sharp pain. A gentle stretch is normal.
+          </div>
+        </div>
+
+        <div className="mt-5 mb-6">
+          <PrimaryButton onClick={markDone} className={done ? '!bg-emerald-500' : ''}>
+            {done ? (
+              <span className="inline-flex items-center gap-2 pop"><IconCheck size={18} /> Marked as done</span>
+            ) : 'Mark as done'}
+          </PrimaryButton>
+        </div>
+      </div>
+    </React.Fragment>
+  );
+
+  if (fromTab) {
+    return (
+      <Screen withTabs activeTab="exercises" onTabTap={onTabTap} bg="bg-white">
+        {content}
+      </Screen>
+    );
+  }
+  return <Screen bg="bg-white">{content}</Screen>;
+};
+
+const ConsultationScreen = ({ onBack }) => {
+  const t = useT();
+  const [selectedSlot, setSelectedSlot] = React.useState('10:30 AM');
+  const [booked, setBooked] = React.useState(false);
+  const slots = ['9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '2:00 PM'];
+  const days = [
+    { d: 'Tue', n: '5', m: 'May' },
+    { d: 'Wed', n: '6', m: 'May' },
+    { d: 'Thu', n: '7', m: 'May', hl: true },
+    { d: 'Fri', n: '8', m: 'May' },
+    { d: 'Sat', n: '9', m: 'May' },
+  ];
+  const [selectedDay, setSelectedDay] = React.useState(2);
+
+  return (
+    <Screen bg="bg-[#F7FAF9]">
+      <NavHeader title="Book consultation" onBack={onBack} />
+      <div className="px-5">
+        <Card className="p-4 flex items-center gap-3.5">
+          <div className="h-14 w-14 rounded-full bg-teal-100 overflow-hidden flex items-center justify-center">
+            <DoctorFigure className="w-full h-full" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[15px] font-bold text-gray-900 truncate">{t.doctorFull}</div>
+            <div className="text-[11px] text-gray-500">Sports & orthopaedic physiotherapy</div>
+            <div className="flex items-center gap-3 mt-1 text-[11px]">
+              <span className="flex items-center gap-0.5 text-amber-500"><IconStar size={12} /> 4.9</span>
+              <span className="text-gray-500">· 12 yrs exp.</span>
+              <span className="text-gray-500">· Dar es Salaam</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="px-5 mt-5">
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider mb-2">SELECT A DATE</div>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {days.map((d, i) => {
+            const sel = selectedDay === i;
+            return (
+              <button key={i} onClick={() => setSelectedDay(i)}
+                className={`shrink-0 w-[62px] h-[76px] rounded-[12px] flex flex-col items-center justify-center border transition-colors
+                  ${sel ? 'bg-teal-500 border-teal-500 text-white' : 'bg-white border-gray-200 text-gray-700'}`}>
+                <div className={`text-[10px] font-semibold ${sel ? 'opacity-90' : 'text-gray-400'}`}>{d.d}</div>
+                <div className="text-[20px] font-bold leading-none mt-0.5">{d.n}</div>
+                <div className={`text-[10px] mt-1 ${sel ? 'opacity-90' : 'text-gray-400'}`}>{d.m}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="px-5 mt-5">
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider mb-2">AVAILABLE SLOTS</div>
+        <div className="grid grid-cols-3 gap-2">
+          {slots.map((s) => {
+            const sel = selectedSlot === s;
+            return (
+              <button key={s} onClick={() => setSelectedSlot(s)}
+                className={`h-11 rounded-[10px] text-[12px] font-semibold border transition-colors
+                  ${sel ? 'bg-teal-500 border-teal-500 text-white' : 'bg-white border-gray-200 text-gray-700 active:bg-gray-50'}`}>
+                {s}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="px-5 mt-5">
+        <div className="text-[11px] font-semibold text-gray-400 tracking-wider mb-2">CONSULTATION TYPE</div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <Card className="p-3 border-teal-500 ring-2 ring-teal-100">
+            <div className="flex items-center gap-2"><IconVideo size={16} className="text-teal-700" />
+              <span className="text-[13px] font-semibold text-gray-900">Video call</span></div>
+            <div className="text-[11px] text-gray-500 mt-1">30 min · 45,000 TZS</div>
+          </Card>
+          <Card className="p-3">
+            <div className="flex items-center gap-2"><IconPin size={16} className="text-gray-500" />
+              <span className="text-[13px] font-semibold text-gray-900">In-person</span></div>
+            <div className="text-[11px] text-gray-500 mt-1">60 min · 75,000 TZS</div>
+          </Card>
+        </div>
+      </div>
+
+      <div className="px-5 mt-5 mb-6">
+        <PrimaryButton onClick={() => { setBooked(true); setTimeout(() => setBooked(false), 1600); }}
+          className={booked ? '!bg-emerald-500' : ''}>
+          {booked ? (
+            <span className="inline-flex items-center gap-2 pop"><IconCheck size={18} /> Booked for {days[selectedDay].d} {days[selectedDay].n}, {selectedSlot}</span>
+          ) : `Confirm · ${days[selectedDay].d} ${days[selectedDay].n} ${days[selectedDay].m}, ${selectedSlot}`}
+        </PrimaryButton>
+      </div>
+    </Screen>
+  );
+};
+
+Object.assign(window, { AssessmentScreen, RecommendationScreen, ExerciseDetailsScreen, ConsultationScreen });
+
+const { useState, useRef, useEffect } = React;
+
+const TweakCtx = React.createContext({});
+window.useT = () => React.useContext(TweakCtx);
+
+const buildCtx = (user) => {
+  const nameParts  = (user.name || '').trim().split(' ');
+  const firstName  = nameParts[0] || '';
+  const lastName   = nameParts.slice(1).join(' ') || '';
+  return {
+    patientFirst:   firstName,
+    patientLast:    lastName,
+    patientFull:    user.name  || '',
+    patientInitial: firstName.charAt(0).toUpperCase() || '?',
+    email:          user.email || '',
+    
+    phone:              user.phone            || '',
+    age:                user.age              || '',
+    gender:             user.gender           || '',
+    emergencyContact:   user.emergencyContact || '',
+    condition:          user.condition        || 'General rehabilitation',
+    
+    healthSharing:      user.healthSharing      !== false,
+    emailNotifications: user.emailNotifications !== false,
+    streakDays:     user.streakDays || 0,
+    showStreak:     true,
+    greetingEmoji:  true,
+    
+    doctorTitle:  'Dr.',
+    doctorFirst:  'Mwanahamisi',
+    doctorLast:   'Kombo',
+    doctorFull:   'Dr. Mwanahamisi Kombo',
+  };
+};
+
+const App = () => {
+  
+  const [currentUser, setCurrentUser] = useState(null);
+  const [stack, setStack]             = useState(['splash']);
+  const [dir, setDir]                 = useState('none');
+  const [selectedExercise, setSelectedExercise] = useState(null);
+  const current = stack[stack.length - 1];
+
+  
+  useEffect(() => {
+    const sessionRaw = localStorage.getItem('physiocare_session');
+    if (!sessionRaw) return;
+    const session = JSON.parse(sessionRaw);
+    const users   = JSON.parse(localStorage.getItem('physiocare_users') || '[]');
+    const user    = users.find(u => u.email === session.email);
+    if (user) {
+      setCurrentUser(user);
+      setStack(['dashboard']);
+    } else {
+      
+      localStorage.removeItem('physiocare_session');
+    }
+  }, []);
+
+  
+  const ctx = currentUser ? buildCtx(currentUser) : {
+    patientFirst: '', patientLast: '', patientFull: '', patientInitial: '?',
+    email: '', condition: '', streakDays: 0, showStreak: false, greetingEmoji: false,
+    doctorTitle: 'Dr.', doctorFirst: 'Mwanahamisi', doctorLast: 'Kombo',
+    doctorFull: 'Dr. Mwanahamisi Kombo',
+  };
+
+  
+  const push    = (screen, extra = {}) => {
+    setDir('forward');
+    setStack(s => [...s, screen]);
+    if (extra.exercise) setSelectedExercise(extra.exercise);
+  };
+  const replace = (screen, transition = 'forward') => {
+    setDir(transition);
+    setStack(s => [...s.slice(0, -1), screen]);
+  };
+  const back    = () => {
+    if (stack.length <= 1) return;
+    setDir('back');
+    setStack(s => s.slice(0, -1));
+  };
+  const resetTo   = (screen) => { setDir('fade'); setStack([screen]); };
+  const onTabTap  = (tabId)  => {
+    if (tabId === current) return;
+    setDir('fade');
+    setStack([tabId]);
+  };
+
+  
+  
+  const handleLogin  = (user) => { setCurrentUser(user); resetTo('dashboard'); };
+
+  
+  const handleSignup = (user) => { setCurrentUser(user); resetTo('dashboard'); };
+
+  
+  const handleLogout = () => {
+    localStorage.removeItem('physiocare_session');
+    setCurrentUser(null);
+    resetTo('splash');
+  };
+
+  
+  
+  const handleUpdateUser = (updatedUser) => {
+    setCurrentUser(updatedUser);
+    
+    localStorage.setItem('physiocare_session', JSON.stringify({ email: updatedUser.email }));
+  };
+
+  
+  
+  const handleDeleteAccount = () => {
+    setCurrentUser(null);
+    resetTo('splash');
+  };
+
+  
+  const renderScreen = (id) => {
+    switch (id) {
+      case 'splash':
+        return <SplashScreen onGetStarted={() => push('login')} />;
+      case 'login':
+        return <LoginScreen onBack={back} onLogin={handleLogin} onSignup={() => replace('signup')} />;
+      case 'signup':
+        return <SignupScreen onBack={back} onSignup={handleSignup} onLogin={() => replace('login', 'back')} />;
+      case 'dashboard':
+        return <DashboardScreen onTabTap={onTabTap} onQuickAction={(id) => push(id)} onBook={() => push('consultation')} />;
+      case 'assessment':
+        return <AssessmentScreen onBack={back} onComplete={() => replace('recommendation')} />;
+      case 'exercises':
+        return <ExercisesScreen onTabTap={onTabTap} onOpenExercise={(ex) => { setSelectedExercise(ex); push('exerciseDetails'); }} />;
+      case 'recommendation':
+        return <RecommendationScreen onBack={back} onOpenExercise={(ex) => push('exerciseDetails', { exercise: ex })} />;
+      case 'exerciseDetails': {
+        const fromTab = stack[0] === 'exercises' && stack.length === 2;
+        return <ExerciseDetailsScreen onBack={back} onTabTap={onTabTap} fromTab={fromTab} exercise={selectedExercise} />;
+      }
+      case 'progress':     return <ProgressScreen onTabTap={onTabTap} />;
+      case 'reminders':    return <RemindersScreen onBack={back} />;
+      case 'consultation': return <ConsultationScreen onBack={back} />;
+      case 'profile':
+        return <ProfileScreen onTabTap={onTabTap} onLogout={handleLogout} onNavigate={push} />;
+      
+      case 'personalInfo':
+        return <PersonalInfoScreen onBack={back} onSave={handleUpdateUser} />;
+      case 'privacySecurity':
+        return <PrivacySecurityScreen onBack={back} onUpdateUser={handleUpdateUser} onDeleteAccount={handleDeleteAccount} />;
+      case 'helpSupport':
+        return <HelpSupportScreen onBack={back} />;
+      
+      case 'healthProfile':
+      case 'notifications':
+        return (
+          <Screen bg="bg-[#F7FAF9]">
+            <NavHeader title={id === 'healthProfile' ? 'Health profile' : 'Notifications'} onBack={back} />
+            <div className="flex flex-col items-center justify-center px-8 text-center py-24">
+              <div className="h-16 w-16 rounded-full bg-teal-100 flex items-center justify-center mb-4">
+                {id === 'healthProfile'
+                  ? <IconHeart size={24} className="text-teal-700" />
+                  : <IconBell size={24} className="text-teal-700" />}
+              </div>
+              <div className="text-[17px] font-bold text-gray-900">Coming soon</div>
+              <div className="text-[13px] text-gray-500 mt-2 leading-relaxed">This section is under development.</div>
+            </div>
+          </Screen>
+        );
+      default: return <div className="p-8 text-gray-500">Unknown screen: {id}</div>;
+    }
+  };
+
+  return (
+    
+    <TweakCtx.Provider value={ctx}>
+      {}
+      <div className="phone-host min-h-screen flex items-center justify-center p-6">
+        <PhoneFrame>
+          <ScreenTransition keyId={current} direction={dir}>
+            {renderScreen(current)}
+          </ScreenTransition>
+        </PhoneFrame>
+      </div>
+    </TweakCtx.Provider>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+  </script>
+</body>
+</html>
